@@ -308,7 +308,7 @@ export default function Home() {
         forcePlay();
       }
     }, 300);
-  }, [currentVideoIndex, videos.length, userInteracted, isMobile]);
+  }, [currentVideoIndex, videos, isMobile]);
 
   const handleNextVideo = useCallback(() => {
     setCurrentVideoIndex((prevIndex) => {
