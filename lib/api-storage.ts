@@ -72,6 +72,37 @@ export async function getGoogleDriveVideos(): Promise<StoredFile[]> {
   }
 }
 
+export async function getGoogleDrivePhotos(): Promise<StoredFile[]> {
+  try {
+    const response = await fetch('/api/drive/photos');
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Failed to fetch Google Drive photos:', {
+        status: response.status,
+        error: errorData
+      });
+      // Si falla, retornar array vacío en lugar de lanzar error
+      return [];
+    }
+
+    const photos = await response.json();
+    // Si la respuesta es un array, retornarlo directamente
+    // Si tiene una propiedad 'error', retornar array vacío
+    if (Array.isArray(photos)) {
+      return photos;
+    } else if (photos.error) {
+      console.error('Google Drive API error:', photos);
+      return [];
+    }
+    
+    return photos;
+  } catch (error) {
+    console.error('Error fetching Google Drive photos:', error);
+    return [];
+  }
+}
+
 export async function deleteFile(id: string, type: 'video' | 'photo'): Promise<void> {
   // No permitir eliminar archivos de Google Drive desde aquí
   if (id.startsWith('drive-')) {

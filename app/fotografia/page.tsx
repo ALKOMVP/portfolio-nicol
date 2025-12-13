@@ -1,40 +1,64 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { uploadFile, getFiles, deleteFile } from '@/lib/api-storage';
+import { uploadFile, getFiles, deleteFile, getGoogleDrivePhotos } from '@/lib/api-storage';
 
 interface PhotoFile {
   id: string;
   name: string;
   url: string;
+  source?: 'uploaded' | 'google-drive';
+  viewUrl?: string;
+  downloadUrl?: string;
 }
 
 export default function FotografiaPage() {
   const [photos, setPhotos] = useState<PhotoFile[]>([]);
+  const [drivePhotos, setDrivePhotos] = useState<PhotoFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Cargar fotos compartidas al iniciar
+  // Cargar fotos compartidas y de Google Drive al iniciar
   useEffect(() => {
-    const loadSharedPhotos = async () => {
+    const loadAllPhotos = async () => {
       try {
-        const sharedPhotos = await getFiles('photo');
-        setPhotos(sharedPhotos);
+        // Cargar fotos subidas manualmente
+        const uploadedPhotos = await getFiles('photo');
+        setPhotos(uploadedPhotos);
       } catch (error) {
-        console.error('Error cargando fotos compartidas:', error);
+        console.error('Error cargando fotos subidas:', error);
+      }
+
+      try {
+        // Cargar fotos de Google Drive
+        const googlePhotos = await getGoogleDrivePhotos();
+        console.log('Fotos de Google Drive cargadas:', googlePhotos);
+        setDrivePhotos(googlePhotos);
+      } catch (error) {
+        console.error('Error cargando fotos de Google Drive:', error);
+        // No fallar completamente si Google Drive falla
+        setDrivePhotos([]);
       } finally {
         setIsInitializing(false);
       }
     };
-    loadSharedPhotos();
+    loadAllPhotos();
     
     // Recargar periódicamente para obtener nuevos archivos
     const interval = setInterval(() => {
       getFiles('photo')
         .then((photos) => setPhotos(photos))
         .catch(() => {});
+      getGoogleDrivePhotos()
+        .then((photos) => {
+          console.log('Fotos de Google Drive actualizadas:', photos);
+          setDrivePhotos(photos);
+        })
+        .catch((error) => {
+          console.error('Error actualizando fotos de Google Drive:', error);
+        });
     }, 30000); // Cada 30 segundos
     
     return () => clearInterval(interval);
@@ -125,54 +149,97 @@ export default function FotografiaPage() {
         )}
 
         {/* Grid de fotos */}
-        {!isInitializing && photos.length === 0 ? (
+        {!isInitializing && allPhotos.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-500 text-xl">
               No hay fotografías cargadas aún. ¡Comienza agregando algunas!
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {photos.map((photo) => (
-              <div
-                key={photo.id}
-                className="relative group glass rounded-lg overflow-hidden hover-glow cursor-pointer"
-                onClick={() => setSelectedPhoto(photo)}
-              >
-                <img
-                  src={photo.url}
-                  alt={photo.name}
-                  className="w-full h-64 object-contain bg-black transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                  <span className="opacity-0 group-hover:opacity-100 text-white font-medium">
-                    Ver más
-                  </span>
+          <>
+            {drivePhotos.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4 gradient-text">
+                  Fotos de Google Drive ({drivePhotos.length})
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {drivePhotos.map((photo) => (
+                    <div
+                      key={photo.id}
+                      className="relative group glass rounded-lg overflow-hidden hover-glow cursor-pointer bg-black"
+                      onClick={() => setSelectedPhoto(photo)}
+                    >
+                      <img
+                        src={photo.url}
+                        alt={photo.name}
+                        className="w-full h-64 object-contain transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                        <span className="opacity-0 group-hover:opacity-100 text-white font-medium">
+                          Ver más
+                        </span>
+                      </div>
+                      <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                        Google Drive
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removePhoto(photo.id);
-                  }}
-                  className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
               </div>
-            ))}
-          </div>
+            )}
+
+            {photos.length > 0 && (
+              <div className={drivePhotos.length > 0 ? 'mt-8' : ''}>
+                {drivePhotos.length > 0 && (
+                  <h2 className="text-2xl font-bold mb-4 gradient-text">
+                    Fotos Subidas
+                  </h2>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {photos.map((photo) => (
+                    <div
+                      key={photo.id}
+                      className="relative group glass rounded-lg overflow-hidden hover-glow cursor-pointer bg-black"
+                      onClick={() => setSelectedPhoto(photo)}
+                    >
+                      <img
+                        src={photo.url}
+                        alt={photo.name}
+                        className="w-full h-64 object-contain transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                        <span className="opacity-0 group-hover:opacity-100 text-white font-medium">
+                          Ver más
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removePhoto(photo.id);
+                        }}
+                        className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -184,10 +251,24 @@ export default function FotografiaPage() {
         >
           <div className="relative max-w-5xl max-h-full">
             <img
-              src={selectedPhoto.url}
+              src={selectedPhoto.viewUrl || selectedPhoto.url}
               alt={selectedPhoto.name}
               className="max-w-full max-h-[90vh] object-contain bg-black/50 rounded-lg"
             />
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+              <p className="text-white font-medium">{selectedPhoto.name}</p>
+              {selectedPhoto.downloadUrl && (
+                <a
+                  href={selectedPhoto.downloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 text-sm"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Descargar
+                </a>
+              )}
+            </div>
             <button
               onClick={() => setSelectedPhoto(null)}
               className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white rounded-full p-3"
