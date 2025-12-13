@@ -70,3 +70,31 @@ export async function getGoogleDrivePhotos(): Promise<StoredFile[]> {
     return [];
   }
 }
+
+export async function getGoogleDriveHomeVideos(): Promise<StoredFile[]> {
+  try {
+    const response = await fetch('/api/drive/home-videos');
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Failed to fetch Google Drive home videos:', {
+        status: response.status,
+        error: errorData
+      });
+      return [];
+    }
+
+    const videos = await response.json();
+    if (Array.isArray(videos)) {
+      return videos;
+    } else if (videos.error) {
+      console.error('Google Drive API error:', videos);
+      return [];
+    }
+    
+    return videos;
+  } catch (error) {
+    console.error('Error fetching Google Drive home videos:', error);
+    return [];
+  }
+}
