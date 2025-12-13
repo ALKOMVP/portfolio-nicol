@@ -8,8 +8,8 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   
   const videos = [
-    '/videos/background-video.mov',
-    '/videos/cabaret-video.mov',
+    '/videos/background-video.mp4',
+    '/videos/cabaret-video.mp4',
   ];
 
   const handleNextVideo = useCallback(() => {
@@ -129,19 +129,18 @@ export default function Home() {
       onWheel={(e) => e.preventDefault()}
     >
       {/* Video de fondo */}
-      <video
-        key={currentVideoIndex}
-        ref={videoRef}
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000"
-      >
-        <source src={videos[currentVideoIndex]} type="video/mp4" />
-        <source src={videos[currentVideoIndex]} type="video/quicktime" />
-        Tu navegador no soporta videos HTML5.
-      </video>
+        <video
+          key={currentVideoIndex}
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000"
+        >
+          <source src={videos[currentVideoIndex]} type="video/mp4" />
+          Tu navegador no soporta videos HTML5.
+        </video>
 
       {/* Indicador de video actual */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
