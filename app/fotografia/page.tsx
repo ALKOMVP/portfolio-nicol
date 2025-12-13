@@ -1,36 +1,25 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { uploadFile, getFiles, deleteFile, getGoogleDrivePhotos } from '@/lib/api-storage';
+import { useState, useEffect } from 'react';
+import { getGoogleDrivePhotos } from '@/lib/api-storage';
 
 interface PhotoFile {
   id: string;
   name: string;
   url: string;
-  source?: 'uploaded' | 'google-drive';
+  source?: 'google-drive';
   viewUrl?: string;
   downloadUrl?: string;
 }
 
 export default function FotografiaPage() {
-  const [photos, setPhotos] = useState<PhotoFile[]>([]);
   const [drivePhotos, setDrivePhotos] = useState<PhotoFile[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoFile | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Cargar fotos compartidas y de Google Drive al iniciar
+  // Cargar fotos de Google Drive al iniciar
   useEffect(() => {
-    const loadAllPhotos = async () => {
-      try {
-        // Cargar fotos subidas manualmente
-        const uploadedPhotos = await getFiles('photo');
-        setPhotos(uploadedPhotos);
-      } catch (error) {
-        console.error('Error cargando fotos subidas:', error);
-      }
-
+    const loadGoogleDrivePhotos = async () => {
       try {
         // Cargar fotos de Google Drive
         const googlePhotos = await getGoogleDrivePhotos();
@@ -38,19 +27,15 @@ export default function FotografiaPage() {
         setDrivePhotos(googlePhotos);
       } catch (error) {
         console.error('Error cargando fotos de Google Drive:', error);
-        // No fallar completamente si Google Drive falla
         setDrivePhotos([]);
       } finally {
         setIsInitializing(false);
       }
     };
-    loadAllPhotos();
+    loadGoogleDrivePhotos();
     
     // Recargar periódicamente para obtener nuevos archivos
     const interval = setInterval(() => {
-      getFiles('photo')
-        .then((photos) => setPhotos(photos))
-        .catch(() => {});
       getGoogleDrivePhotos()
         .then((photos) => {
           console.log('Fotos de Google Drive actualizadas:', photos);
@@ -63,51 +48,6 @@ export default function FotografiaPage() {
     
     return () => clearInterval(interval);
   }, []);
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    setIsLoading(true);
-    const newPhotos: PhotoFile[] = [];
-
-    try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (file.type.startsWith('image/')) {
-          // Subir al servidor (compartido)
-          const uploadedFile = await uploadFile(file, 'photo');
-          newPhotos.push({
-            id: uploadedFile.id,
-            name: uploadedFile.name,
-            url: uploadedFile.url,
-          });
-        }
-      }
-
-      setPhotos((prev) => [...prev, ...newPhotos]);
-    } catch (error) {
-      console.error('Error subiendo fotos:', error);
-      alert('Error al subir fotos. Por favor, intenta nuevamente.');
-    } finally {
-      setIsLoading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
-
-  const removePhoto = async (id: string) => {
-    try {
-      // Eliminar del servidor (compartido)
-      await deleteFile(id, 'photo');
-      // Eliminar del estado
-      setPhotos((prev) => prev.filter((p) => p.id !== id));
-    } catch (error) {
-      console.error('Error eliminando foto:', error);
-      alert('Error al eliminar foto. Por favor, intenta nuevamente.');
-    }
-  };
 
   return (
     <div className="min-h-screen pt-16 pb-20 px-4 sm:px-6 lg:px-8">
