@@ -13,14 +13,33 @@ export default function Home() {
     '/videos/cabaret-video.mp4',
   ];
 
-  // Habilitar scroll inmediatamente
+  // Habilitar scroll inmediatamente y forzar autoplay en móviles
   useEffect(() => {
     setVideosLoaded(true);
+    
+    // Forzar reproducción del primer video en móviles
+    const firstVideo = videoRefs.current[0];
+    if (firstVideo) {
+      // Intentar reproducir inmediatamente
+      const tryPlay = async () => {
+        try {
+          firstVideo.muted = true;
+          firstVideo.playsInline = true;
+          await firstVideo.play();
+        } catch (error) {
+          // Si falla, intentar después de que el video esté listo
+          firstVideo.addEventListener('loadeddata', () => {
+            firstVideo.play().catch(() => {});
+          }, { once: true });
+        }
+      };
+      tryPlay();
+    }
     
     // Precargar los demás videos en segundo plano (sin bloquear)
     videos.slice(1).forEach((src) => {
       const video = document.createElement('video');
-      video.preload = 'metadata'; // Solo metadata para no bloquear
+      video.preload = 'metadata';
       video.src = src;
       video.muted = true;
       video.playsInline = true;
@@ -42,9 +61,16 @@ export default function Home() {
         }
       });
       
-      // Reproducir el video actual
+      // Reproducir el video actual (asegurar atributos para móviles)
+      currentVideo.muted = true;
+      currentVideo.playsInline = true;
       currentVideo.currentTime = 0;
-      currentVideo.play().catch(() => {});
+      currentVideo.play().catch((error) => {
+        // Si falla, intentar cuando tenga datos cargados
+        currentVideo.addEventListener('loadeddata', () => {
+          currentVideo.play().catch(() => {});
+        }, { once: true });
+      });
     }
   }, [currentVideoIndex, videos.length]);
 
@@ -191,7 +217,38 @@ export default function Home() {
               // Reproducir automáticamente cuando el video puede reproducirse
               if (isActive && videoRefs.current[index]) {
                 const video = videoRefs.current[index];
+                if (video) {
+                  // Asegurar que esté muteado y con playsInline para móviles
+                  video.muted = true;
+                  video.playsInline = true;
+                  // Intentar reproducir
+                  video.play().catch((error) => {
+                    // Si falla, intentar de nuevo cuando el video tenga datos cargados
+                    video.addEventListener('loadeddata', () => {
+                      video.play().catch(() => {});
+                    }, { once: true });
+                  });
+                }
+              }
+            }}
+            onLoadedData={() => {
+              // Forzar reproducción cuando el video tiene datos cargados (móviles)
+              if (isActive && videoRefs.current[index]) {
+                const video = videoRefs.current[index];
                 if (video && video.paused) {
+                  video.muted = true;
+                  video.playsInline = true;
+                  video.play().catch(() => {});
+                }
+              }
+            }}
+            onLoadedMetadata={() => {
+              // Intentar reproducir cuando se cargan los metadatos (móviles)
+              if (isActive && isFirstVideo && videoRefs.current[index]) {
+                const video = videoRefs.current[index];
+                if (video && video.paused) {
+                  video.muted = true;
+                  video.playsInline = true;
                   video.play().catch(() => {});
                 }
               }
