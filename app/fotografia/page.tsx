@@ -12,6 +12,11 @@ interface PhotoFile {
   downloadUrl?: string;
 }
 
+// Función para remover la extensión del nombre del archivo
+function removeFileExtension(filename: string): string {
+  return filename.replace(/\.[^/.]+$/, '');
+}
+
 export default function FotografiaPage() {
   const [drivePhotos, setDrivePhotos] = useState<PhotoFile[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);

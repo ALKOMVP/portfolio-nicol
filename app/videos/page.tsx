@@ -13,6 +13,11 @@ interface VideoFile {
   alternativeUrl?: string;
 }
 
+// Función para remover la extensión del nombre del archivo
+function removeFileExtension(filename: string): string {
+  return filename.replace(/\.[^/.]+$/, '');
+}
+
 export default function VideosPage() {
   const [driveVideos, setDriveVideos] = useState<VideoFile[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -99,10 +104,10 @@ export default function VideosPage() {
               {driveVideos.map((video) => (
                 <div
                   key={video.id}
-                  className="relative group glass rounded-lg overflow-hidden hover-glow cursor-pointer"
+                  className="relative group glass rounded-lg overflow-hidden hover-glow cursor-pointer flex flex-col"
                   onClick={() => setSelectedVideo(video)}
                 >
-                  <div className="relative w-full h-64 bg-black flex items-center justify-center">
+                  <div className="relative w-full h-64 bg-black flex items-center justify-center flex-shrink-0">
                     <iframe
                       src={video.url}
                       className="w-full h-full border-0"
@@ -118,13 +123,10 @@ export default function VideosPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-medium mb-2 truncate" title={video.name}>
-                      {video.name}
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <h3 className="font-medium text-white text-sm md:text-base line-clamp-2" title={removeFileExtension(video.name)}>
+                      {removeFileExtension(video.name)}
                     </h3>
-                    <div className="flex items-center">
-                      <span className="text-xs text-gray-400">Google Drive</span>
-                    </div>
                   </div>
                 </div>
               ))}
