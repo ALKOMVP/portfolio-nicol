@@ -136,45 +136,18 @@ export default function VideosPage() {
                 className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
                 onClick={() => setSelectedVideo(null)}
               >
-                <div className="relative w-full h-full flex items-center justify-center">
+                <div 
+                  className="relative w-full h-full flex items-center justify-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="w-full h-full max-w-[95vw] max-h-[95vh] bg-black">
-                    {/* Intentar usar video HTML5 si hay directUrl disponible, sino usar iframe */}
-                    {selectedVideo.directUrl ? (
-                      <video
-                        src={selectedVideo.directUrl}
-                        className="w-full h-full object-contain"
-                        controls
-                        autoPlay
-                        muted={false}
-                        playsInline
-                        onLoadedData={(e) => {
-                          // Asegurar que se reproduzca cuando tenga datos
-                          const video = e.currentTarget;
-                          if (video.paused) {
-                            video.play().catch(() => {
-                              // Si falla autoplay, intentar reproducir sin mute
-                              video.muted = false;
-                              video.play().catch(() => {});
-                            });
-                          }
-                        }}
-                        onCanPlay={(e) => {
-                          // Intentar reproducir cuando puede reproducirse
-                          const video = e.currentTarget;
-                          if (video.paused) {
-                            video.play().catch(() => {});
-                          }
-                        }}
-                      />
-                    ) : (
-                      <iframe
-                        src={selectedVideo.url}
-                        className="w-full h-full border-0"
-                        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                        allowFullScreen
-                        title={selectedVideo.name}
-                      />
-                    )}
+                    <iframe
+                      src={selectedVideo.url}
+                      className="w-full h-full border-0"
+                      allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                      allowFullScreen
+                      title={selectedVideo.name}
+                    />
                   </div>
                   <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between bg-black/70 px-4 py-2 rounded-lg">
                     <p className="text-white font-medium truncate mr-4">{selectedVideo.name}</p>
