@@ -7,6 +7,8 @@ interface StoredFile {
   type: 'video' | 'photo';
   source?: 'uploaded' | 'google-drive';
   downloadUrl?: string;
+  viewUrl?: string;
+  directUrl?: string;
   size?: string;
   createdTime?: string;
   modifiedTime?: string;
