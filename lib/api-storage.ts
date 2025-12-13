@@ -5,6 +5,11 @@ interface StoredFile {
   name: string;
   url: string;
   type: 'video' | 'photo';
+  source?: 'uploaded' | 'google-drive';
+  downloadUrl?: string;
+  size?: string;
+  createdTime?: string;
+  modifiedTime?: string;
 }
 
 export async function uploadFile(file: File, type: 'video' | 'photo'): Promise<StoredFile> {
@@ -36,7 +41,24 @@ export async function getFiles(type: 'video' | 'photo'): Promise<StoredFile[]> {
   return response.json();
 }
 
+export async function getGoogleDriveVideos(): Promise<StoredFile[]> {
+  const response = await fetch('/api/drive/videos');
+
+  if (!response.ok) {
+    // Si falla, retornar array vacío en lugar de lanzar error
+    console.warn('Failed to fetch Google Drive videos');
+    return [];
+  }
+
+  return response.json();
+}
+
 export async function deleteFile(id: string, type: 'video' | 'photo'): Promise<void> {
+  // No permitir eliminar archivos de Google Drive desde aquí
+  if (id.startsWith('drive-')) {
+    throw new Error('Cannot delete Google Drive files from this interface');
+  }
+
   const response = await fetch(`/api/files/${id}`, {
     method: 'DELETE',
   });

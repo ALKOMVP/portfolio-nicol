@@ -1,0 +1,84 @@
+export async function onRequestGet(context: {
+  request: Request;
+  env: {
+    GOOGLE_DRIVE_FOLDER_ID?: string;
+    GOOGLE_API_KEY?: string;
+  };
+}) {
+  try {
+    const folderId = context.env.GOOGLE_DRIVE_FOLDER_ID;
+    const apiKey = context.env.GOOGLE_API_KEY;
+
+    if (!folderId) {
+      return new Response(
+        JSON.stringify({ error: 'GOOGLE_DRIVE_FOLDER_ID not configured' }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Construir URL de la API de Google Drive
+    // q parameter busca archivos de video en la carpeta específica
+    const query = `'${folderId}' in parents and mimeType contains 'video' and trashed=false`;
+    const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,size,createdTime,modifiedTime)&orderBy=createdTime desc${apiKey ? `&key=${apiKey}` : ''}`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Google Drive API error:', errorText);
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch videos from Google Drive' }),
+        {
+          status: response.status,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    const data = await response.json();
+    const files = data.files || [];
+
+    // Convertir a formato compatible con el frontend
+    const videos = files.map((file: any) => {
+      // Generar URL directa de descarga/visualización
+      // Para videos, usamos la URL de visualización de Google Drive
+      const videoUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
+      // Alternativa: URL de visualización (mejor para algunos navegadores)
+      const viewUrl = `https://drive.google.com/file/d/${file.id}/preview`;
+
+      return {
+        id: `drive-${file.id}`,
+        name: file.name,
+        url: viewUrl, // Usar URL de preview para mejor compatibilidad
+        downloadUrl: videoUrl,
+        type: 'video',
+        source: 'google-drive',
+        size: file.size,
+        createdTime: file.createdTime,
+        modifiedTime: file.modifiedTime,
+      };
+    });
+
+    return new Response(JSON.stringify(videos), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=300', // Cache por 5 minutos
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching Google Drive videos:', error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch videos from Google Drive' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+}
+
