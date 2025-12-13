@@ -1,18 +1,55 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { getGoogleDriveHomeVideos } from '@/lib/api-storage';
+
+interface HomeVideo {
+  id: string;
+  name: string;
+  url: string;
+  alternativeUrl?: string;
+}
 
 export default function Home() {
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [videosLoaded, setVideosLoaded] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
+  const [videos, setVideos] = useState<HomeVideo[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const videos = [
-    '/videos/background-video.mp4',
-    '/videos/cabaret-video.mp4',
-  ];
+  // Cargar videos de Google Drive para la portada
+  useEffect(() => {
+    const loadHomeVideos = async () => {
+      try {
+        const driveVideos = await getGoogleDriveHomeVideos();
+        if (driveVideos.length > 0) {
+          const mappedVideos: HomeVideo[] = driveVideos.map(v => ({
+            id: v.id,
+            name: v.name,
+            url: v.directUrl || v.url,
+            alternativeUrl: v.alternativeUrl,
+          }));
+          setVideos(mappedVideos);
+        } else {
+          // Fallback a videos locales si no hay videos en Google Drive
+          setVideos([
+            { id: 'local-1', name: 'background-video', url: '/videos/background-video.mp4' },
+            { id: 'local-2', name: 'cabaret-video', url: '/videos/cabaret-video.mp4' },
+          ]);
+        }
+      } catch (error) {
+        console.error('Error cargando videos de la portada:', error);
+        // Fallback a videos locales en caso de error
+        setVideos([
+          { id: 'local-1', name: 'background-video', url: '/videos/background-video.mp4' },
+          { id: 'local-2', name: 'cabaret-video', url: '/videos/cabaret-video.mp4' },
+        ]);
+      }
+    };
+    
+    loadHomeVideos();
+  }, []);
 
   // Técnica agresiva: Crear un video oculto para desbloquear autoplay
   useEffect(() => {
@@ -110,13 +147,15 @@ export default function Home() {
 
   // Habilitar scroll inmediatamente y precargar videos
   useEffect(() => {
+    if (videos.length === 0) return;
+    
     setVideosLoaded(true);
     
     // Precargar los demás videos en segundo plano (sin bloquear)
-    videos.slice(1).forEach((src) => {
+    videos.slice(1).forEach((videoData) => {
       const video = document.createElement('video');
       video.preload = 'metadata';
-      video.src = src;
+      video.src = videoData.url;
       video.muted = true;
       video.playsInline = true;
       video.load();
@@ -393,14 +432,14 @@ export default function Home() {
       }}
     >
       {/* Videos pre-cargados - todos renderizados pero solo uno visible */}
-      {videos.map((videoSrc, index) => {
+      {videos.length > 0 && videos.map((videoData, index) => {
         const validIndex = currentVideoIndex % videos.length;
         const isActive = index === validIndex;
         const isFirstVideo = index === 0;
         
         return (
           <video
-            key={`video-${index}`}
+            key={`video-${videoData.id}-${index}`}
             ref={(el) => {
               videoRefs.current[index] = el;
             }}
@@ -418,7 +457,11 @@ export default function Home() {
               isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
             onError={(e) => {
-              console.error('Error cargando video:', videoSrc);
+              console.error('Error cargando video:', videoData.url);
+              // Intentar con URL alternativa si está disponible
+              if (videoData.alternativeUrl && e.currentTarget.src !== videoData.alternativeUrl) {
+                e.currentTarget.src = videoData.alternativeUrl;
+              }
             }}
             onCanPlay={() => {
               // Reproducir automáticamente cuando el video puede reproducirse
@@ -544,7 +587,10 @@ export default function Home() {
               }
             }}
           >
-            <source src={videoSrc} type="video/mp4" />
+            <source src={videoData.url} type="video/mp4" />
+            {videoData.alternativeUrl && (
+              <source src={videoData.alternativeUrl} type="video/mp4" />
+            )}
             Tu navegador no soporta videos HTML5.
           </video>
         );
