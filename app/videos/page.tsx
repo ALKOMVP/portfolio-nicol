@@ -23,7 +23,16 @@ export default function VideosPage() {
         // Cargar videos de Google Drive
         const googleVideos = await getGoogleDriveVideos();
         console.log('Videos de Google Drive cargados:', googleVideos);
-        setDriveVideos(googleVideos);
+        // Filtrar solo videos de Google Drive y mapear al tipo correcto
+        const mappedVideos: VideoFile[] = googleVideos.map(v => ({
+          id: v.id,
+          name: v.name,
+          url: v.url,
+          source: 'google-drive' as const,
+          downloadUrl: v.downloadUrl,
+          directUrl: v.directUrl,
+        }));
+        setDriveVideos(mappedVideos);
       } catch (error) {
         console.error('Error cargando videos de Google Drive:', error);
         setDriveVideos([]);
