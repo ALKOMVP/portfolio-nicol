@@ -102,6 +102,9 @@ export default function Home() {
 
   // Detectar scroll en cualquier parte de la pantalla y cambiar video
   useEffect(() => {
+    // Deshabilitar scroll mientras los videos se cargan
+    if (!videosLoaded) return;
+
     let videoChangeTimeout: NodeJS.Timeout;
     let lastChangeTime = 0;
     const DEBOUNCE_TIME = 300; // Tiempo mínimo entre cambios (ms)
@@ -181,7 +184,7 @@ export default function Home() {
       document.removeEventListener('touchmove', handleTouchMove);
       clearTimeout(videoChangeTimeout);
     };
-  }, [handleNextVideo, handlePreviousVideo]);
+  }, [handleNextVideo, handlePreviousVideo, videosLoaded]);
 
   return (
     <div 
@@ -226,11 +229,9 @@ export default function Home() {
         );
       })}
       
-      {/* Indicador de carga */}
+      {/* Bloqueo invisible mientras carga */}
       {!videosLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/50">
-          <div className="text-white text-lg">Cargando videos...</div>
-        </div>
+        <div className="absolute inset-0 z-30 pointer-events-none" />
       )}
 
       {/* Indicador de video actual */}

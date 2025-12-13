@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { saveFile, loadAllFilesWithUrls, deleteFile } from '@/lib/storage';
 
 interface PhotoFile {
   id: string;
@@ -11,8 +12,24 @@ interface PhotoFile {
 export default function FotografiaPage() {
   const [photos, setPhotos] = useState<PhotoFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Cargar fotos guardadas al iniciar
+  useEffect(() => {
+    const loadSavedPhotos = async () => {
+      try {
+        const savedPhotos = await loadAllFilesWithUrls('photo');
+        setPhotos(savedPhotos);
+      } catch (error) {
+        console.error('Error cargando fotos guardadas:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    loadSavedPhotos();
+  }, []);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -21,33 +38,48 @@ export default function FotografiaPage() {
     setIsLoading(true);
     const newPhotos: PhotoFile[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (file.type.startsWith('image/')) {
-        const url = URL.createObjectURL(file);
-        newPhotos.push({
-          id: Date.now().toString() + i,
-          name: file.name,
-          url,
-        });
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type.startsWith('image/')) {
+          // Guardar en IndexedDB
+          const id = await saveFile(file, 'photo');
+          // Crear URL para mostrar
+          const url = URL.createObjectURL(file);
+          newPhotos.push({
+            id,
+            name: file.name,
+            url,
+          });
+        }
       }
-    }
 
-    setPhotos((prev) => [...prev, ...newPhotos]);
-    setIsLoading(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      setPhotos((prev) => [...prev, ...newPhotos]);
+    } catch (error) {
+      console.error('Error guardando fotos:', error);
+    } finally {
+      setIsLoading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
-  const removePhoto = (id: string) => {
-    setPhotos((prev) => {
-      const photo = prev.find((p) => p.id === id);
-      if (photo) {
-        URL.revokeObjectURL(photo.url);
-      }
-      return prev.filter((p) => p.id !== id);
-    });
+  const removePhoto = async (id: string) => {
+    try {
+      // Eliminar de IndexedDB
+      await deleteFile(id, 'photo');
+      // Eliminar del estado y revocar URL
+      setPhotos((prev) => {
+        const photo = prev.find((p) => p.id === id);
+        if (photo) {
+          URL.revokeObjectURL(photo.url);
+        }
+        return prev.filter((p) => p.id !== id);
+      });
+    } catch (error) {
+      console.error('Error eliminando foto:', error);
+    }
   };
 
   return (
@@ -81,12 +113,16 @@ export default function FotografiaPage() {
           />
         </div>
 
+        {isInitializing && (
+          <div className="text-center text-gray-400 mb-8">Cargando fotos guardadas...</div>
+        )}
+
         {isLoading && (
-          <div className="text-center text-gray-400 mb-8">Cargando imágenes...</div>
+          <div className="text-center text-gray-400 mb-8">Subiendo imágenes...</div>
         )}
 
         {/* Grid de fotos */}
-        {photos.length === 0 ? (
+        {!isInitializing && photos.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-500 text-xl">
               No hay fotografías cargadas aún. ¡Comienza agregando algunas!

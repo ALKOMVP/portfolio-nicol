@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { saveFile, loadAllFilesWithUrls, deleteFile } from '@/lib/storage';
 
 interface VideoFile {
   id: string;
@@ -11,7 +12,23 @@ interface VideoFile {
 export default function VideosPage() {
   const [videos, setVideos] = useState<VideoFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Cargar videos guardados al iniciar
+  useEffect(() => {
+    const loadSavedVideos = async () => {
+      try {
+        const savedVideos = await loadAllFilesWithUrls('video');
+        setVideos(savedVideos);
+      } catch (error) {
+        console.error('Error cargando videos guardados:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    loadSavedVideos();
+  }, []);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -20,33 +37,48 @@ export default function VideosPage() {
     setIsLoading(true);
     const newVideos: VideoFile[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (file.type.startsWith('video/')) {
-        const url = URL.createObjectURL(file);
-        newVideos.push({
-          id: Date.now().toString() + i,
-          name: file.name,
-          url,
-        });
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type.startsWith('video/')) {
+          // Guardar en IndexedDB
+          const id = await saveFile(file, 'video');
+          // Crear URL para mostrar
+          const url = URL.createObjectURL(file);
+          newVideos.push({
+            id,
+            name: file.name,
+            url,
+          });
+        }
       }
-    }
 
-    setVideos((prev) => [...prev, ...newVideos]);
-    setIsLoading(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      setVideos((prev) => [...prev, ...newVideos]);
+    } catch (error) {
+      console.error('Error guardando videos:', error);
+    } finally {
+      setIsLoading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
-  const removeVideo = (id: string) => {
-    setVideos((prev) => {
-      const video = prev.find((v) => v.id === id);
-      if (video) {
-        URL.revokeObjectURL(video.url);
-      }
-      return prev.filter((v) => v.id !== id);
-    });
+  const removeVideo = async (id: string) => {
+    try {
+      // Eliminar de IndexedDB
+      await deleteFile(id, 'video');
+      // Eliminar del estado y revocar URL
+      setVideos((prev) => {
+        const video = prev.find((v) => v.id === id);
+        if (video) {
+          URL.revokeObjectURL(video.url);
+        }
+        return prev.filter((v) => v.id !== id);
+      });
+    } catch (error) {
+      console.error('Error eliminando video:', error);
+    }
   };
 
   return (
@@ -80,12 +112,16 @@ export default function VideosPage() {
           />
         </div>
 
+        {isInitializing && (
+          <div className="text-center text-gray-400 mb-8">Cargando videos guardados...</div>
+        )}
+
         {isLoading && (
-          <div className="text-center text-gray-400 mb-8">Cargando videos...</div>
+          <div className="text-center text-gray-400 mb-8">Subiendo videos...</div>
         )}
 
         {/* Grid de videos */}
-        {videos.length === 0 ? (
+        {!isInitializing && videos.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-500 text-xl">
               No hay videos cargados aún. ¡Comienza agregando algunos!
