@@ -10,6 +10,7 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   
   const videos = [
+    '/videos/background-video-1.mp4',
     '/videos/background-video-2.mp4',
     '/videos/background-video-3.mp4',
   ];
