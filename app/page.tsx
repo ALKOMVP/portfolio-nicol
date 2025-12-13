@@ -10,11 +10,22 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   
-  const videos = [
+  // Videos para desktop (alta resolución)
+  const desktopVideos = [
     '/videos/background-video-1.mp4',
     '/videos/background-video-2.mp4',
     '/videos/background-video-3.mp4',
   ];
+  
+  // Videos para mobile (baja resolución, carga rápida)
+  const mobileVideos = [
+    '/videos/background-video-1-mobile.mp4',
+    '/videos/background-video-2-mobile.mp4',
+    '/videos/background-video-3-mobile.mp4',
+  ];
+  
+  // Seleccionar videos según dispositivo
+  const videos = isMobile ? mobileVideos : desktopVideos;
 
   // Detectar si es mobile
   useEffect(() => {
