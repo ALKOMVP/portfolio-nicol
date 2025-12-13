@@ -29,8 +29,14 @@ export async function onRequestGet(context: {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Google Drive API error:', errorText);
+      // Retornar error detallado para debugging
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch videos from Google Drive' }),
+        JSON.stringify({ 
+          error: 'Failed to fetch videos from Google Drive',
+          details: errorText,
+          folderId: folderId,
+          hasApiKey: !!apiKey
+        }),
         {
           status: response.status,
           headers: { 'Content-Type': 'application/json' },
@@ -46,13 +52,16 @@ export async function onRequestGet(context: {
       // Generar URL directa de descarga/visualización
       // Para videos, usamos la URL de visualización de Google Drive
       const videoUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
-      // Alternativa: URL de visualización (mejor para algunos navegadores)
+      // URL de visualización en iframe
       const viewUrl = `https://drive.google.com/file/d/${file.id}/preview`;
+      // URL alternativa para video directo (si el archivo está compartido públicamente)
+      const directUrl = `https://drive.google.com/uc?export=view&id=${file.id}`;
 
       return {
         id: `drive-${file.id}`,
         name: file.name,
-        url: viewUrl, // Usar URL de preview para mejor compatibilidad
+        url: viewUrl, // URL de preview para iframe
+        directUrl: directUrl, // URL directa alternativa
         downloadUrl: videoUrl,
         type: 'video',
         source: 'google-drive',

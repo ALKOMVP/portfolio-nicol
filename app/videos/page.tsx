@@ -9,6 +9,7 @@ interface VideoFile {
   url: string;
   source?: 'uploaded' | 'google-drive';
   downloadUrl?: string;
+  directUrl?: string;
 }
 
 export default function VideosPage() {
@@ -25,12 +26,19 @@ export default function VideosPage() {
         // Cargar videos subidos manualmente
         const uploadedVideos = await getFiles('video');
         setVideos(uploadedVideos);
+      } catch (error) {
+        console.error('Error cargando videos subidos:', error);
+      }
 
+      try {
         // Cargar videos de Google Drive
         const googleVideos = await getGoogleDriveVideos();
+        console.log('Videos de Google Drive cargados:', googleVideos);
         setDriveVideos(googleVideos);
       } catch (error) {
-        console.error('Error cargando videos:', error);
+        console.error('Error cargando videos de Google Drive:', error);
+        // No fallar completamente si Google Drive falla
+        setDriveVideos([]);
       } finally {
         setIsInitializing(false);
       }
@@ -43,8 +51,13 @@ export default function VideosPage() {
         .then((videos) => setVideos(videos))
         .catch(() => {});
       getGoogleDriveVideos()
-        .then((videos) => setDriveVideos(videos))
-        .catch(() => {});
+        .then((videos) => {
+          console.log('Videos de Google Drive actualizados:', videos);
+          setDriveVideos(videos);
+        })
+        .catch((error) => {
+          console.error('Error actualizando videos de Google Drive:', error);
+        });
     }, 30000); // Cada 30 segundos
     
     return () => clearInterval(interval);
@@ -159,7 +172,7 @@ export default function VideosPage() {
             {driveVideos.length > 0 && (
               <div className="mb-8">
                 <h2 className="text-2xl font-bold mb-4 gradient-text">
-                  Videos de Google Drive
+                  Videos de Google Drive ({driveVideos.length})
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {driveVideos.map((video) => (
@@ -170,26 +183,41 @@ export default function VideosPage() {
                       <div className="relative w-full h-64 bg-black flex items-center justify-center">
                         <iframe
                           src={video.url}
-                          className="w-full h-full"
-                          allow="autoplay; encrypted-media"
+                          className="w-full h-full border-0"
+                          allow="autoplay; encrypted-media; fullscreen"
                           allowFullScreen
                           title={video.name}
+                          loading="lazy"
                         />
                       </div>
                       <div className="p-4">
-                        <h3 className="font-medium mb-2 truncate">{video.name}</h3>
+                        <h3 className="font-medium mb-2 truncate" title={video.name}>
+                          {video.name}
+                        </h3>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-gray-400">Google Drive</span>
-                          {video.downloadUrl && (
-                            <a
-                              href={video.downloadUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-400 hover:text-blue-300 text-sm"
-                            >
-                              Descargar
-                            </a>
-                          )}
+                          <div className="flex gap-2">
+                            {video.directUrl && (
+                              <a
+                                href={video.directUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:text-blue-300 text-sm"
+                              >
+                                Ver
+                              </a>
+                            )}
+                            {video.downloadUrl && (
+                              <a
+                                href={video.downloadUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:text-blue-300 text-sm"
+                              >
+                                Descargar
+                              </a>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
