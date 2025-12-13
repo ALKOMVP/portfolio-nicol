@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { saveFile, loadAllFilesWithUrls, deleteFile } from '@/lib/storage';
+import { uploadFile, getAllFiles, deleteFile } from '@/lib/api-storage';
 
 interface PhotoFile {
   id: string;
@@ -16,19 +16,44 @@ export default function FotografiaPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Cargar fotos guardadas al iniciar
+  // Cargar fotos compartidas al iniciar
   useEffect(() => {
-    const loadSavedPhotos = async () => {
+    const loadSharedPhotos = async () => {
       try {
-        const savedPhotos = await loadAllFilesWithUrls('photo');
-        setPhotos(savedPhotos);
+        // Intentar cargar desde el servidor (compartido)
+        const sharedPhotos = await getAllFiles('photo');
+        setPhotos(sharedPhotos);
+        
+        // Guardar en localStorage como cache
+        localStorage.setItem('portfolio-photos', JSON.stringify(sharedPhotos));
       } catch (error) {
-        console.error('Error cargando fotos guardadas:', error);
+        console.error('Error cargando fotos compartidas:', error);
+        // Fallback: cargar desde localStorage si hay error
+        try {
+          const cached = localStorage.getItem('portfolio-photos');
+          if (cached) {
+            setPhotos(JSON.parse(cached));
+          }
+        } catch (e) {
+          console.error('Error cargando desde cache:', e);
+        }
       } finally {
         setIsInitializing(false);
       }
     };
-    loadSavedPhotos();
+    loadSharedPhotos();
+    
+    // Recargar periódicamente para obtener nuevos archivos
+    const interval = setInterval(() => {
+      getAllFiles('photo')
+        .then((photos) => {
+          setPhotos(photos);
+          localStorage.setItem('portfolio-photos', JSON.stringify(photos));
+        })
+        .catch(() => {});
+    }, 30000); // Cada 30 segundos
+    
+    return () => clearInterval(interval);
   }, []);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,21 +67,20 @@ export default function FotografiaPage() {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (file.type.startsWith('image/')) {
-          // Guardar en IndexedDB
-          const id = await saveFile(file, 'photo');
-          // Crear URL para mostrar
-          const url = URL.createObjectURL(file);
+          // Subir al servidor (compartido)
+          const uploadedFile = await uploadFile(file, 'photo');
           newPhotos.push({
-            id,
-            name: file.name,
-            url,
+            id: uploadedFile.id,
+            name: uploadedFile.name,
+            url: uploadedFile.url,
           });
         }
       }
 
       setPhotos((prev) => [...prev, ...newPhotos]);
     } catch (error) {
-      console.error('Error guardando fotos:', error);
+      console.error('Error subiendo fotos:', error);
+      alert('Error al subir fotos. Por favor, intenta nuevamente.');
     } finally {
       setIsLoading(false);
       if (fileInputRef.current) {
@@ -67,18 +91,13 @@ export default function FotografiaPage() {
 
   const removePhoto = async (id: string) => {
     try {
-      // Eliminar de IndexedDB
+      // Eliminar del servidor (compartido)
       await deleteFile(id, 'photo');
-      // Eliminar del estado y revocar URL
-      setPhotos((prev) => {
-        const photo = prev.find((p) => p.id === id);
-        if (photo) {
-          URL.revokeObjectURL(photo.url);
-        }
-        return prev.filter((p) => p.id !== id);
-      });
+      // Eliminar del estado
+      setPhotos((prev) => prev.filter((p) => p.id !== id));
     } catch (error) {
       console.error('Error eliminando foto:', error);
+      alert('Error al eliminar foto. Por favor, intenta nuevamente.');
     }
   };
 
