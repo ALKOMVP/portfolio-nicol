@@ -166,6 +166,18 @@ export default function Home() {
     let touchChanged = false;
     
     const handleTouchStart = (e: TouchEvent) => {
+      // Si es la primera interacción, intentar reproducir videos
+      if (!userInteracted) {
+        setUserInteracted(true);
+        videoRefs.current.forEach((video) => {
+          if (video && video.paused) {
+            video.muted = true;
+            video.playsInline = true;
+            video.play().catch(() => {});
+          }
+        });
+      }
+      
       touchStartY = e.touches[0].clientY;
       touchChanged = false;
     };
@@ -206,7 +218,7 @@ export default function Home() {
       document.removeEventListener('touchmove', handleTouchMove);
       clearTimeout(videoChangeTimeout);
     };
-  }, [handleNextVideo, handlePreviousVideo, videosLoaded]);
+  }, [handleNextVideo, handlePreviousVideo, videosLoaded, userInteracted]);
 
   return (
     <div 
@@ -315,6 +327,50 @@ export default function Home() {
         );
       })}
       
+      {/* Overlay invisible para capturar primera interacción en iOS */}
+      {!userInteracted && (
+        <div 
+          className="absolute inset-0 z-40 cursor-pointer"
+          onTouchStart={async (e) => {
+            e.preventDefault();
+            setUserInteracted(true);
+            const firstVideo = videoRefs.current[0];
+            if (firstVideo) {
+              firstVideo.muted = true;
+              firstVideo.playsInline = true;
+              try {
+                await firstVideo.play();
+              } catch (error) {
+                // Si aún falla, intentar de nuevo
+                setTimeout(() => {
+                  firstVideo.play().catch(() => {});
+                }, 100);
+              }
+            }
+          }}
+          onClick={async (e) => {
+            e.preventDefault();
+            setUserInteracted(true);
+            const firstVideo = videoRefs.current[0];
+            if (firstVideo) {
+              firstVideo.muted = true;
+              firstVideo.playsInline = true;
+              try {
+                await firstVideo.play();
+              } catch (error) {
+                setTimeout(() => {
+                  firstVideo.play().catch(() => {});
+                }, 100);
+              }
+            }
+          }}
+          style={{ 
+            touchAction: 'none',
+            WebkitTapHighlightColor: 'transparent'
+          }}
+        />
+      )}
+
       {/* Bloqueo invisible mientras carga */}
       {!videosLoaded && (
         <div className="absolute inset-0 z-30 pointer-events-none" />
