@@ -24,7 +24,16 @@ export default function FotografiaPage() {
         // Cargar fotos de Google Drive
         const googlePhotos = await getGoogleDrivePhotos();
         console.log('Fotos de Google Drive cargadas:', googlePhotos);
-        setDrivePhotos(googlePhotos);
+        // Filtrar solo fotos de Google Drive y mapear al tipo correcto
+        const mappedPhotos: PhotoFile[] = googlePhotos.map(p => ({
+          id: p.id,
+          name: p.name,
+          url: p.url,
+          source: 'google-drive' as const,
+          viewUrl: p.viewUrl,
+          downloadUrl: p.downloadUrl,
+        }));
+        setDrivePhotos(mappedPhotos);
       } catch (error) {
         console.error('Error cargando fotos de Google Drive:', error);
         setDrivePhotos([]);
@@ -39,7 +48,15 @@ export default function FotografiaPage() {
       getGoogleDrivePhotos()
         .then((photos) => {
           console.log('Fotos de Google Drive actualizadas:', photos);
-          setDrivePhotos(photos);
+          const mappedPhotos: PhotoFile[] = photos.map(p => ({
+            id: p.id,
+            name: p.name,
+            url: p.url,
+            source: 'google-drive' as const,
+            viewUrl: p.viewUrl,
+            downloadUrl: p.downloadUrl,
+          }));
+          setDrivePhotos(mappedPhotos);
         })
         .catch((error) => {
           console.error('Error actualizando fotos de Google Drive:', error);
