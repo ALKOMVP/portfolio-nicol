@@ -139,7 +139,7 @@ export default function VideosPage() {
                 <div className="relative w-full h-full flex items-center justify-center">
                   <div className="w-full h-full max-w-[95vw] max-h-[95vh] bg-black">
                     <iframe
-                      src={selectedVideo.url}
+                      src={`${selectedVideo.url}${selectedVideo.url.includes('?') ? '&' : '?'}autoplay=1`}
                       className="w-full h-full border-0"
                       allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                       allowFullScreen
