@@ -537,17 +537,19 @@ export default function Home() {
                 if (isMobile && video.paused) {
                   video.muted = true;
                   video.playsInline = true;
-                  video.play().then(() => {
-                    if (!video.paused) {
-                      setUserInteracted(true);
-                    }
-                  }).catch(() => {
-                    setTimeout(() => {
-                      video.muted = true;
-                      video.playsInline = true;
-                      video.play().catch(() => {});
-                    }, 100);
-                  });
+                  
+                  const tryPlay = () => {
+                    video.play().then(() => {
+                      if (!video.paused) {
+                        setUserInteracted(true);
+                      }
+                    }).catch(() => {});
+                  };
+                  
+                  tryPlay();
+                  setTimeout(tryPlay, 50);
+                  setTimeout(tryPlay, 150);
+                  setTimeout(tryPlay, 300);
                 }
               }
             }}
@@ -558,7 +560,18 @@ export default function Home() {
                 if (video && video.paused) {
                   video.muted = true;
                   video.playsInline = true;
-                  video.play().catch(() => {});
+                  
+                  // En mobile, múltiples intentos
+                  if (isMobile) {
+                    const tryPlay = () => {
+                      video.play().catch(() => {});
+                    };
+                    tryPlay();
+                    setTimeout(tryPlay, 100);
+                    setTimeout(tryPlay, 300);
+                  } else {
+                    video.play().catch(() => {});
+                  }
                 }
               }
             }}
