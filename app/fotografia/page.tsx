@@ -135,11 +135,12 @@ export default function FotografiaPage() {
               src={selectedPhoto.viewUrl || selectedPhoto.url}
               alt={selectedPhoto.name}
               className="max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain"
-              style={{ imageRendering: 'high-quality' }}
-              onError={(e) => {
+              style={{ imageRendering: 'auto' }}
+              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                 // Si falla la URL de alta calidad, intentar con la URL normal
-                if (selectedPhoto.viewUrl && e.currentTarget.src !== selectedPhoto.url) {
-                  e.currentTarget.src = selectedPhoto.url;
+                const target = e.currentTarget;
+                if (selectedPhoto.viewUrl && target.src !== selectedPhoto.url) {
+                  target.src = selectedPhoto.url;
                 }
               }}
             />
