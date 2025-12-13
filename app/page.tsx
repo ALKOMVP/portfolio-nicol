@@ -169,18 +169,38 @@ export default function Home() {
       }
     });
     
-    // En mobile, asegurar que el video se carga si no tiene datos
+    // En mobile, asegurar que el video se carga y reproduce correctamente
     if (isMobile) {
       // Si el video no tiene datos cargados, forzar carga
       if (currentVideo.readyState === 0 || currentVideo.readyState === 1) {
         currentVideo.load();
       }
       
+      // Asegurar que el video tenga la fuente correcta
+      const currentVideoSrc = videos[validIndex];
+      if (currentVideoSrc && currentVideo.querySelector('source')?.getAttribute('src') !== currentVideoSrc) {
+        // Si la fuente no coincide, actualizar
+        const source = currentVideo.querySelector('source');
+        if (source) {
+          source.setAttribute('src', currentVideoSrc);
+          currentVideo.load();
+        }
+      }
+      
       // También precargar el siguiente video para anticipar el scroll
       const nextIndex = (validIndex + 1) % videos.length;
       const nextVideo = videoRefs.current[nextIndex];
-      if (nextVideo && (nextVideo.readyState === 0 || nextVideo.readyState === 1)) {
-        nextVideo.load();
+      if (nextVideo) {
+        if (nextVideo.readyState === 0 || nextVideo.readyState === 1) {
+          nextVideo.load();
+        }
+        // Asegurar que el siguiente video tenga la fuente correcta
+        const nextVideoSrc = videos[nextIndex];
+        const nextSource = nextVideo.querySelector('source');
+        if (nextSource && nextSource.getAttribute('src') !== nextVideoSrc) {
+          nextSource.setAttribute('src', nextVideoSrc);
+          nextVideo.load();
+        }
       }
     }
     
@@ -514,10 +534,22 @@ export default function Home() {
                   video.setAttribute('muted', '');
                   video.setAttribute('playsinline', '');
                   
+                  // En mobile, verificar que la fuente sea correcta
+                  if (isMobile) {
+                    const expectedSrc = videos[index];
+                    const source = video.querySelector('source');
+                    if (source && source.getAttribute('src') !== expectedSrc) {
+                      source.setAttribute('src', expectedSrc);
+                      video.load();
+                      return;
+                    }
+                  }
+                  
                   const playAttempts = [
                     () => video.play(),
                     () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 50)),
                     () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 100)),
+                    () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 200)),
                   ];
                   
                   playAttempts[0]().then(() => {
@@ -525,8 +557,18 @@ export default function Home() {
                       setUserInteracted(true);
                     }
                   }).catch(() => {
-                    playAttempts[1]().catch(() => {
-                      playAttempts[2]().catch(() => {});
+                    playAttempts[1]().then(() => {
+                      if (!video.paused) {
+                        setUserInteracted(true);
+                      }
+                    }).catch(() => {
+                      playAttempts[2]().then(() => {
+                        if (!video.paused) {
+                          setUserInteracted(true);
+                        }
+                      }).catch(() => {
+                        playAttempts[3]().catch(() => {});
+                      });
                     });
                   });
                 }
