@@ -149,15 +149,13 @@ export default function Home() {
 
   // Habilitar scroll inmediatamente y precargar videos
   useEffect(() => {
-    if (videos.length === 0) return;
-    
     setVideosLoaded(true);
     
     // Precargar los demás videos en segundo plano (sin bloquear)
-    videos.slice(1).forEach((videoData) => {
+    videos.slice(1).forEach((src) => {
       const video = document.createElement('video');
       video.preload = 'metadata';
-      video.src = videoData.url;
+      video.src = src;
       video.muted = true;
       video.playsInline = true;
       video.load();
