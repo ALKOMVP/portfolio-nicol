@@ -31,26 +31,32 @@ export default function Home() {
   }, [videos.length]);
 
   useEffect(() => {
-    if (videoRef.current && videos[currentVideoIndex]) {
+    if (videoRef.current && videos.length > 0) {
       // Asegurar que el índice es válido
       const validIndex = currentVideoIndex % videos.length;
       const videoSrc = videos[validIndex];
+      const currentSrc = videoRef.current.getAttribute('src') || videoRef.current.src;
+      const expectedSrc = videoSrc.startsWith('http') ? videoSrc : videoSrc;
       
-      // Cargar y reproducir el video
+      // Cargar y reproducir el video (siempre actualizar para asegurar que funciona)
       videoRef.current.src = videoSrc;
       videoRef.current.load();
       
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
-        playPromise.catch((error) => {
-          console.log('Error al reproducir video:', error);
-          // Intentar reproducir nuevamente después de un breve delay
-          setTimeout(() => {
-            if (videoRef.current) {
-              videoRef.current.play().catch(() => {});
-            }
-          }, 100);
-        });
+        playPromise
+          .then(() => {
+            // Video reproducido correctamente
+          })
+          .catch((error) => {
+            console.log('Error al reproducir video:', error);
+            // Intentar reproducir nuevamente después de un breve delay
+            setTimeout(() => {
+              if (videoRef.current) {
+                videoRef.current.play().catch(() => {});
+              }
+            }, 200);
+          });
       }
     }
   }, [currentVideoIndex, videos]);
@@ -66,7 +72,8 @@ export default function Home() {
   // Detectar scroll en cualquier parte de la pantalla y cambiar video
   useEffect(() => {
     let videoChangeTimeout: NodeJS.Timeout;
-    let isChanging = false;
+    let lastChangeTime = 0;
+    const DEBOUNCE_TIME = 300; // Tiempo mínimo entre cambios (ms)
 
     const handleWheel = (e: WheelEvent) => {
       // Prevenir scroll real
@@ -76,22 +83,25 @@ export default function Home() {
       // Detectar dirección del scroll
       const deltaY = e.deltaY;
       
-      // Cambiar video según la dirección del scroll
-      if (Math.abs(deltaY) > 10 && !isChanging) {
-        isChanging = true;
-        clearTimeout(videoChangeTimeout);
-        videoChangeTimeout = setTimeout(() => {
-          if (deltaY > 0) {
-            // Scroll hacia abajo - siguiente video
-            handleNextVideo();
-          } else {
-            // Scroll hacia arriba - video anterior
-            handlePreviousVideo();
-          }
-          setTimeout(() => {
-            isChanging = false;
-          }, 800);
-        }, 100);
+      // Cambiar video según la dirección del scroll (con debounce)
+      if (Math.abs(deltaY) > 10) {
+        const now = Date.now();
+        const timeSinceLastChange = now - lastChangeTime;
+        
+        if (timeSinceLastChange >= DEBOUNCE_TIME) {
+          clearTimeout(videoChangeTimeout);
+          lastChangeTime = now;
+          
+          videoChangeTimeout = setTimeout(() => {
+            if (deltaY > 0) {
+              // Scroll hacia abajo - siguiente video
+              handleNextVideo();
+            } else {
+              // Scroll hacia arriba - video anterior
+              handlePreviousVideo();
+            }
+          }, 50);
+        }
       }
     };
 
@@ -149,23 +159,38 @@ export default function Home() {
       onWheel={(e) => e.preventDefault()}
     >
       {/* Video de fondo */}
-      {videos.length > 0 && (
-        <video
-          key={`video-${currentVideoIndex % videos.length}`}
-          ref={videoRef}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000"
-          onError={(e) => {
-            console.error('Error cargando video:', videos[currentVideoIndex % videos.length]);
-          }}
-        >
-          <source src={videos[currentVideoIndex % videos.length]} type="video/mp4" />
-          Tu navegador no soporta videos HTML5.
-        </video>
-      )}
+      {videos.length > 0 && (() => {
+        const validIndex = currentVideoIndex % videos.length;
+        const videoSrc = videos[validIndex];
+        return (
+          <video
+            key={`video-${validIndex}`}
+            ref={videoRef}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000"
+            onError={(e) => {
+              console.error('Error cargando video:', videoSrc);
+              // Intentar recargar el video
+              if (videoRef.current) {
+                videoRef.current.load();
+                videoRef.current.play().catch(() => {});
+              }
+            }}
+            onLoadedData={() => {
+              // Asegurar que el video se reproduce cuando se carga
+              if (videoRef.current && videoRef.current.paused) {
+                videoRef.current.play().catch(() => {});
+              }
+            }}
+          >
+            <source src={videoSrc} type="video/mp4" />
+            Tu navegador no soporta videos HTML5.
+          </video>
+        );
+      })()}
 
       {/* Indicador de video actual */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
