@@ -47,7 +47,15 @@ export default function VideosPage() {
       getGoogleDriveVideos()
         .then((videos) => {
           console.log('Videos de Google Drive actualizados:', videos);
-          setDriveVideos(videos);
+          const mappedVideos: VideoFile[] = videos.map(v => ({
+            id: v.id,
+            name: v.name,
+            url: v.url,
+            source: 'google-drive' as const,
+            downloadUrl: v.downloadUrl,
+            directUrl: v.directUrl,
+          }));
+          setDriveVideos(mappedVideos);
         })
         .catch((error) => {
           console.error('Error actualizando videos de Google Drive:', error);
