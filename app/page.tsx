@@ -109,26 +109,71 @@ export default function Home() {
         }
       });
       
-      // Reproducir el video actual (asegurar atributos para móviles)
+      // Asegurar todos los atributos necesarios para móviles
       currentVideo.muted = true;
       currentVideo.playsInline = true;
+      currentVideo.setAttribute('autoplay', '');
+      currentVideo.setAttribute('muted', '');
+      currentVideo.setAttribute('playsinline', '');
       currentVideo.currentTime = 0;
       
-      // Intentar reproducir (funcionará mejor después de la primera interacción)
+      // Función para intentar reproducir el video
       const tryPlay = async () => {
+        // Asegurar que el video tenga datos cargados
+        if (currentVideo.readyState < 2) {
+          // Si no tiene datos suficientes, esperar a que los cargue
+          const playWhenReady = () => {
+            currentVideo.muted = true;
+            currentVideo.playsInline = true;
+            currentVideo.play().catch(() => {});
+          };
+          
+          currentVideo.addEventListener('loadeddata', playWhenReady, { once: true });
+          currentVideo.addEventListener('canplay', playWhenReady, { once: true });
+          
+          // Forzar carga del video si es necesario
+          if (currentVideo.readyState === 0) {
+            currentVideo.load();
+          }
+          
+          return;
+        }
+        
+        // Si tiene datos suficientes, intentar reproducir inmediatamente
         try {
           await currentVideo.play();
-        } catch (error) {
-          // Si falla y el usuario ya interactuó, intentar de nuevo
-          if (userInteracted) {
+          // Verificar que realmente se está reproduciendo
+          if (currentVideo.paused) {
+            // Si aún está pausado, intentar de nuevo
             setTimeout(() => {
               currentVideo.play().catch(() => {});
             }, 100);
           }
+        } catch (error) {
+          // Si falla, intentar cuando tenga más datos
+          const playOnReady = () => {
+            currentVideo.play().catch(() => {});
+          };
+          
+          currentVideo.addEventListener('canplay', playOnReady, { once: true });
+          currentVideo.addEventListener('canplaythrough', playOnReady, { once: true });
+          
+          // Si el video no tiene datos, forzar carga
+          if (currentVideo.readyState < 2) {
+            currentVideo.load();
+          }
         }
       };
       
+      // Intentar reproducir inmediatamente
       tryPlay();
+      
+      // También intentar después de un pequeño delay para asegurar que el DOM está actualizado
+      setTimeout(() => {
+        if (currentVideo.paused) {
+          tryPlay();
+        }
+      }, 50);
     }
   }, [currentVideoIndex, videos.length, userInteracted]);
 
@@ -300,7 +345,7 @@ export default function Home() {
             loop
             muted
             playsInline
-            preload={isFirstVideo ? "auto" : "metadata"}
+            preload="auto"
             x5-video-player-type="h5"
             x5-video-player-fullscreen="true"
             x5-video-orientation="portraint"
@@ -316,7 +361,7 @@ export default function Home() {
               // Reproducir automáticamente cuando el video puede reproducirse
               if (isActive && videoRefs.current[index]) {
                 const video = videoRefs.current[index];
-                if (video) {
+                if (video && video.paused) {
                   video.muted = true;
                   video.playsInline = true;
                   video.setAttribute('autoplay', '');
@@ -357,7 +402,23 @@ export default function Home() {
                     if (!video.paused) {
                       setUserInteracted(true);
                     }
-                  }).catch(() => {});
+                  }).catch(() => {
+                    // Si falla, intentar de nuevo cuando pueda reproducirse
+                    video.addEventListener('canplay', () => {
+                      video.play().catch(() => {});
+                    }, { once: true });
+                  });
+                }
+              }
+            }}
+            onCanPlayThrough={() => {
+              // Asegurar reproducción cuando el video puede reproducirse completamente
+              if (isActive && videoRefs.current[index]) {
+                const video = videoRefs.current[index];
+                if (video && video.paused) {
+                  video.muted = true;
+                  video.playsInline = true;
+                  video.play().catch(() => {});
                 }
               }
             }}
@@ -388,8 +449,17 @@ export default function Home() {
             }}
             onPlay={() => {
               // Marcar como interactuado cuando el video se reproduce
-              if (isActive && isFirstVideo) {
+              if (isActive) {
                 setUserInteracted(true);
+              }
+            }}
+            onPlaying={() => {
+              // Asegurar que el video sigue reproduciéndose
+              if (isActive && videoRefs.current[index]) {
+                const video = videoRefs.current[index];
+                if (video.paused) {
+                  video.play().catch(() => {});
+                }
               }
             }}
           >
