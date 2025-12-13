@@ -45,11 +45,14 @@ export default function Home() {
     // Intentar reproducir el video oculto para desbloquear autoplay
     unlockVideo.play().catch(() => {});
 
-    // Técnica agresiva: Intentar reproducir el primer video múltiples veces
+    // Técnica optimizada para mobile: cargar y reproducir el primer video lo más rápido posible
     const tryAutoPlay = async () => {
       const firstVideo = videoRefs.current[0];
-      if (firstVideo) {
-        // Asegurar todos los atributos necesarios
+      if (!firstVideo) return;
+      
+      // En mobile, usar estrategia más ligera y rápida
+      if (isMobile) {
+        // Asegurar atributos mínimos necesarios
         firstVideo.muted = true;
         firstVideo.playsInline = true;
         firstVideo.setAttribute('autoplay', '');
@@ -57,82 +60,127 @@ export default function Home() {
         firstVideo.setAttribute('playsinline', '');
         firstVideo.setAttribute('webkit-playsinline', 'true');
         firstVideo.setAttribute('x5-video-player-type', 'h5');
-        firstVideo.setAttribute('x5-video-player-fullscreen', 'true');
         
-        // Intentar reproducir múltiples veces con diferentes estrategias
-        const attempts = [
-          () => firstVideo.play(),
-          () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 50)),
-          () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 100)),
-          () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 200)),
-          () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 300)),
-          () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 500)),
-        ];
-        
-        for (const attempt of attempts) {
-          try {
-            await attempt();
-            if (!firstVideo.paused) {
-              setUserInteracted(true);
-              break;
-            }
-          } catch (error) {
-            // Continuar con el siguiente intento
+        // En mobile, solo intentar reproducir cuando tenga datos suficientes
+        const playWhenReady = () => {
+          if (firstVideo.readyState >= 2) { // HAVE_CURRENT_DATA
+            firstVideo.play().then(() => {
+              if (!firstVideo.paused) {
+                setUserInteracted(true);
+              }
+            }).catch(() => {});
           }
+        };
+        
+        // Escuchar eventos de carga optimizados para mobile
+        firstVideo.addEventListener('loadedmetadata', playWhenReady, { once: true });
+        firstVideo.addEventListener('loadeddata', playWhenReady, { once: true });
+        firstVideo.addEventListener('canplay', playWhenReady, { once: true });
+        
+        return;
+      }
+      
+      // En desktop, usar estrategia más agresiva
+      firstVideo.muted = true;
+      firstVideo.playsInline = true;
+      firstVideo.setAttribute('autoplay', '');
+      firstVideo.setAttribute('muted', '');
+      firstVideo.setAttribute('playsinline', '');
+      firstVideo.setAttribute('webkit-playsinline', 'true');
+      firstVideo.setAttribute('x5-video-player-type', 'h5');
+      firstVideo.setAttribute('x5-video-player-fullscreen', 'true');
+      
+      const attempts = [
+        () => firstVideo.play(),
+        () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 50)),
+        () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 100)),
+        () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 200)),
+        () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 300)),
+        () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 500)),
+      ];
+      
+      for (const attempt of attempts) {
+        try {
+          await attempt();
+          if (!firstVideo.paused) {
+            setUserInteracted(true);
+            break;
+          }
+        } catch (error) {
+          // Continuar con el siguiente intento
         }
       }
     };
 
-    // Intentar inmediatamente
-    tryAutoPlay();
-
-    // Intentar cuando el DOM esté completamente listo
-    if (document.readyState === 'complete') {
-      setTimeout(tryAutoPlay, 50);
-      setTimeout(tryAutoPlay, 100);
-      setTimeout(tryAutoPlay, 200);
+    // En mobile, intentar solo cuando el video esté listo (más eficiente)
+    if (isMobile) {
+      const firstVideo = videoRefs.current[0];
+      if (firstVideo) {
+        const playWhenReady = () => {
+          if (firstVideo.readyState >= 2) {
+            firstVideo.muted = true;
+            firstVideo.playsInline = true;
+            firstVideo.play().then(() => {
+              if (!firstVideo.paused) {
+                setUserInteracted(true);
+              }
+            }).catch(() => {});
+          }
+        };
+        
+        firstVideo.addEventListener('loadedmetadata', playWhenReady, { once: true });
+        firstVideo.addEventListener('loadeddata', playWhenReady, { once: true });
+        firstVideo.addEventListener('canplay', playWhenReady, { once: true });
+      }
     } else {
-      window.addEventListener('load', () => {
+      // En desktop, usar estrategia más agresiva
+      tryAutoPlay();
+      
+      if (document.readyState === 'complete') {
         setTimeout(tryAutoPlay, 50);
         setTimeout(tryAutoPlay, 100);
-      }, { once: true });
-    }
-
-    // Intentar cuando el video tenga datos cargados
-    const firstVideo = videoRefs.current[0];
-    if (firstVideo) {
-      const playWhenReady = () => {
-        firstVideo.muted = true;
-        firstVideo.playsInline = true;
-        firstVideo.play().then(() => {
-          if (!firstVideo.paused) {
-            setUserInteracted(true);
-          }
-        }).catch(() => {});
-      };
+        setTimeout(tryAutoPlay, 200);
+      } else {
+        window.addEventListener('load', () => {
+          setTimeout(tryAutoPlay, 50);
+          setTimeout(tryAutoPlay, 100);
+        }, { once: true });
+      }
       
-      firstVideo.addEventListener('loadeddata', playWhenReady, { once: true });
-      firstVideo.addEventListener('canplay', playWhenReady, { once: true });
-      firstVideo.addEventListener('canplaythrough', playWhenReady, { once: true });
-      firstVideo.addEventListener('loadedmetadata', playWhenReady, { once: true });
+      const firstVideo = videoRefs.current[0];
+      if (firstVideo) {
+        const playWhenReady = () => {
+          firstVideo.muted = true;
+          firstVideo.playsInline = true;
+          firstVideo.play().then(() => {
+            if (!firstVideo.paused) {
+              setUserInteracted(true);
+            }
+          }).catch(() => {});
+        };
+        
+        firstVideo.addEventListener('loadeddata', playWhenReady, { once: true });
+        firstVideo.addEventListener('canplay', playWhenReady, { once: true });
+        firstVideo.addEventListener('canplaythrough', playWhenReady, { once: true });
+        firstVideo.addEventListener('loadedmetadata', playWhenReady, { once: true });
+      }
     }
 
     return () => {
-      window.removeEventListener('load', tryAutoPlay);
-      if (document.body.contains(unlockVideo)) {
+      if (!isMobile && unlockVideo && document.body.contains(unlockVideo)) {
         document.body.removeChild(unlockVideo);
       }
     };
-  }, []);
+  }, [isMobile]);
 
   // Habilitar scroll inmediatamente y precargar videos
   useEffect(() => {
+    // En mobile, habilitar scroll inmediatamente sin esperar
+    // No precargar nada en mobile para máxima velocidad inicial
     setVideosLoaded(true);
     
-    // En mobile, NO precargar los demás videos para optimizar la carga inicial
-    // Solo se cargarán cuando el usuario scrollee hacia ellos
+    // En desktop, precargar los demás videos en segundo plano
     if (!isMobile) {
-      // En desktop, precargar los demás videos en segundo plano
       videos.slice(1).forEach((src) => {
         const video = document.createElement('video');
         video.preload = 'metadata';
@@ -438,12 +486,13 @@ export default function Home() {
             loop
             muted
             playsInline
-            preload={isMobile ? (isFirstVideo ? "auto" : "none") : "auto"}
+            preload={isMobile ? (isFirstVideo ? "metadata" : "none") : "auto"}
             x5-video-player-type="h5"
             x5-video-player-fullscreen="true"
             x5-video-orientation="portraint"
             webkit-playsinline="true"
             x-webkit-airplay="allow"
+            loading={isMobile && !isFirstVideo ? "lazy" : undefined}
             className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
               isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
