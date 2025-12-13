@@ -606,6 +606,9 @@ export default function Home() {
             {videoData.alternativeUrl && (
               <source src={videoData.alternativeUrl} type="video/mp4" />
             )}
+            {videoData.thirdUrl && (
+              <source src={videoData.thirdUrl} type="video/mp4" />
+            )}
             Tu navegador no soporta videos HTML5.
           </video>
         );
