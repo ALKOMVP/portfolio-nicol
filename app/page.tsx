@@ -6,6 +6,7 @@ export default function Home() {
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [videosLoaded, setVideosLoaded] = useState(false);
+  const [userInteracted, setUserInteracted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
   const videos = [
@@ -13,28 +14,41 @@ export default function Home() {
     '/videos/cabaret-video.mp4',
   ];
 
-  // Habilitar scroll inmediatamente y forzar autoplay en móviles
+  // Capturar primera interacción del usuario para desbloquear autoplay en iOS
+  useEffect(() => {
+    const handleFirstInteraction = async () => {
+      if (!userInteracted) {
+        setUserInteracted(true);
+        
+        // Intentar reproducir todos los videos después de la primera interacción
+        videoRefs.current.forEach((video) => {
+          if (video && video.paused) {
+            video.muted = true;
+            video.playsInline = true;
+            video.play().catch(() => {});
+          }
+        });
+      }
+    };
+
+    // Escuchar múltiples eventos de interacción
+    const events = ['touchstart', 'touchend', 'click', 'scroll'];
+    events.forEach((event) => {
+      document.addEventListener(event, handleFirstInteraction, { once: true, passive: true });
+      window.addEventListener(event, handleFirstInteraction, { once: true, passive: true });
+    });
+
+    return () => {
+      events.forEach((event) => {
+        document.removeEventListener(event, handleFirstInteraction);
+        window.removeEventListener(event, handleFirstInteraction);
+      });
+    };
+  }, [userInteracted]);
+
+  // Habilitar scroll inmediatamente y precargar videos
   useEffect(() => {
     setVideosLoaded(true);
-    
-    // Forzar reproducción del primer video en móviles
-    const firstVideo = videoRefs.current[0];
-    if (firstVideo) {
-      // Intentar reproducir inmediatamente
-      const tryPlay = async () => {
-        try {
-          firstVideo.muted = true;
-          firstVideo.playsInline = true;
-          await firstVideo.play();
-        } catch (error) {
-          // Si falla, intentar después de que el video esté listo
-          firstVideo.addEventListener('loadeddata', () => {
-            firstVideo.play().catch(() => {});
-          }, { once: true });
-        }
-      };
-      tryPlay();
-    }
     
     // Precargar los demás videos en segundo plano (sin bloquear)
     videos.slice(1).forEach((src) => {
@@ -65,14 +79,24 @@ export default function Home() {
       currentVideo.muted = true;
       currentVideo.playsInline = true;
       currentVideo.currentTime = 0;
-      currentVideo.play().catch((error) => {
-        // Si falla, intentar cuando tenga datos cargados
-        currentVideo.addEventListener('loadeddata', () => {
-          currentVideo.play().catch(() => {});
-        }, { once: true });
-      });
+      
+      // Intentar reproducir (funcionará mejor después de la primera interacción)
+      const tryPlay = async () => {
+        try {
+          await currentVideo.play();
+        } catch (error) {
+          // Si falla y el usuario ya interactuó, intentar de nuevo
+          if (userInteracted) {
+            setTimeout(() => {
+              currentVideo.play().catch(() => {});
+            }, 100);
+          }
+        }
+      };
+      
+      tryPlay();
     }
-  }, [currentVideoIndex, videos.length]);
+  }, [currentVideoIndex, videos.length, userInteracted]);
 
   const handleNextVideo = useCallback(() => {
     setCurrentVideoIndex((prevIndex) => {
@@ -189,6 +213,30 @@ export default function Home() {
       ref={containerRef}
       className="relative h-screen w-full overflow-hidden fixed inset-0"
       onWheel={(e) => e.preventDefault()}
+      onTouchStart={() => {
+        // Capturar primera interacción táctil para iOS
+        if (!userInteracted) {
+          setUserInteracted(true);
+          const firstVideo = videoRefs.current[0];
+          if (firstVideo && firstVideo.paused) {
+            firstVideo.muted = true;
+            firstVideo.playsInline = true;
+            firstVideo.play().catch(() => {});
+          }
+        }
+      }}
+      onClick={() => {
+        // Capturar primera interacción de click para iOS
+        if (!userInteracted) {
+          setUserInteracted(true);
+          const firstVideo = videoRefs.current[0];
+          if (firstVideo && firstVideo.paused) {
+            firstVideo.muted = true;
+            firstVideo.playsInline = true;
+            firstVideo.play().catch(() => {});
+          }
+        }
+      }}
     >
       {/* Videos pre-cargados - todos renderizados pero solo uno visible */}
       {videos.map((videoSrc, index) => {
@@ -218,21 +266,26 @@ export default function Home() {
               if (isActive && videoRefs.current[index]) {
                 const video = videoRefs.current[index];
                 if (video) {
-                  // Asegurar que esté muteado y con playsInline para móviles
                   video.muted = true;
                   video.playsInline = true;
-                  // Intentar reproducir
-                  video.play().catch((error) => {
-                    // Si falla, intentar de nuevo cuando el video tenga datos cargados
-                    video.addEventListener('loadeddata', () => {
-                      video.play().catch(() => {});
-                    }, { once: true });
+                  // Intentar reproducir (funcionará mejor después de interacción del usuario)
+                  video.play().catch(() => {
+                    // Si falla, esperar a que el usuario interactúe
+                    if (!userInteracted) {
+                      const playOnInteraction = () => {
+                        video.play().catch(() => {});
+                        document.removeEventListener('touchstart', playOnInteraction);
+                        document.removeEventListener('click', playOnInteraction);
+                      };
+                      document.addEventListener('touchstart', playOnInteraction, { once: true });
+                      document.addEventListener('click', playOnInteraction, { once: true });
+                    }
                   });
                 }
               }
             }}
             onLoadedData={() => {
-              // Forzar reproducción cuando el video tiene datos cargados (móviles)
+              // Forzar reproducción cuando el video tiene datos cargados
               if (isActive && videoRefs.current[index]) {
                 const video = videoRefs.current[index];
                 if (video && video.paused) {
@@ -243,12 +296,14 @@ export default function Home() {
               }
             }}
             onLoadedMetadata={() => {
-              // Intentar reproducir cuando se cargan los metadatos (móviles)
+              // Intentar reproducir cuando se cargan los metadatos (especialmente para iOS)
               if (isActive && isFirstVideo && videoRefs.current[index]) {
                 const video = videoRefs.current[index];
                 if (video && video.paused) {
                   video.muted = true;
                   video.playsInline = true;
+                  // En iOS, necesitamos esperar a que el usuario interactúe
+                  // Pero intentamos de todas formas
                   video.play().catch(() => {});
                 }
               }
