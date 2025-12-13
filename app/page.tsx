@@ -13,68 +13,80 @@ export default function Home() {
     '/videos/cabaret-video.mp4',
   ];
 
-  // Precargar todos los videos al inicio
+  // Precargar videos en segundo plano (el primero se carga automáticamente por el elemento video)
   useEffect(() => {
-    const loadPromises = videos.map((src, index) => {
-      return new Promise<void>((resolve) => {
-        const video = document.createElement('video');
-        video.preload = 'auto';
-        video.src = src;
-        video.muted = true;
-        video.playsInline = true;
-        
-        video.addEventListener('loadeddata', () => {
-          resolve();
-        });
-        
-        video.addEventListener('error', () => {
-          console.warn(`Error precargando video ${index}:`, src);
-          resolve(); // Continuar aunque haya error
-        });
-        
-        // Forzar carga
-        video.load();
-      });
-    });
-
-    Promise.all(loadPromises).then(() => {
-      setVideosLoaded(true);
+    // Habilitar scroll inmediatamente (el primer video se reproducirá automáticamente)
+    // Los demás videos se precargan en segundo plano
+    setVideosLoaded(true);
+    
+    // Precargar los demás videos en segundo plano
+    videos.slice(1).forEach((src) => {
+      const video = document.createElement('video');
+      video.preload = 'auto';
+      video.src = src;
+      video.muted = true;
+      video.playsInline = true;
+      video.load();
     });
   }, [videos]);
 
-  // Inicializar y reproducir el video actual cuando se cargan todos
+  // Reproducir el primer video inmediatamente al montar
   useEffect(() => {
-    if (videosLoaded) {
-      const validIndex = currentVideoIndex % videos.length;
-      const currentVideo = videoRefs.current[validIndex];
+    const firstVideo = videoRefs.current[0];
+    if (firstVideo) {
+      // Reproducir el primer video tan pronto como esté disponible
+      const tryPlay = () => {
+        if (firstVideo.readyState >= 2) {
+          firstVideo.currentTime = 0;
+          firstVideo.play().catch(() => {});
+        } else {
+          // Esperar a que el video esté listo
+          const handleCanPlay = () => {
+            firstVideo.currentTime = 0;
+            firstVideo.play().catch(() => {});
+            firstVideo.removeEventListener('canplay', handleCanPlay);
+          };
+          firstVideo.addEventListener('canplay', handleCanPlay);
+          firstVideo.load();
+        }
+      };
       
-      if (currentVideo) {
-        // Pausar todos los videos primero
-        videoRefs.current.forEach((video, index) => {
-          if (video && index !== validIndex) {
-            video.pause();
-            video.currentTime = 0;
-          }
-        });
-        
-        // Reproducir el video actual
-        if (currentVideo.readyState >= 2) {
-          // Video ya está cargado
+      // Intentar reproducir inmediatamente
+      tryPlay();
+    }
+  }, []);
+
+  // Cambiar video cuando cambia el índice
+  useEffect(() => {
+    const validIndex = currentVideoIndex % videos.length;
+    const currentVideo = videoRefs.current[validIndex];
+    
+    if (currentVideo) {
+      // Pausar todos los videos primero
+      videoRefs.current.forEach((video, index) => {
+        if (video && index !== validIndex) {
+          video.pause();
+          video.currentTime = 0;
+        }
+      });
+      
+      // Reproducir el video actual
+      if (currentVideo.readyState >= 2) {
+        // Video ya está cargado
+        currentVideo.currentTime = 0;
+        currentVideo.play().catch(() => {});
+      } else {
+        // Esperar a que el video se cargue
+        const handleCanPlay = () => {
           currentVideo.currentTime = 0;
           currentVideo.play().catch(() => {});
-        } else {
-          // Esperar a que el video se cargue
-          const handleCanPlay = () => {
-            currentVideo.currentTime = 0;
-            currentVideo.play().catch(() => {});
-            currentVideo.removeEventListener('canplay', handleCanPlay);
-          };
-          currentVideo.addEventListener('canplay', handleCanPlay);
-          currentVideo.load();
-        }
+          currentVideo.removeEventListener('canplay', handleCanPlay);
+        };
+        currentVideo.addEventListener('canplay', handleCanPlay);
+        currentVideo.load();
       }
     }
-  }, [currentVideoIndex, videosLoaded, videos.length]);
+  }, [currentVideoIndex, videos.length]);
 
   const handleNextVideo = useCallback(() => {
     setCurrentVideoIndex((prevIndex) => {
@@ -196,6 +208,7 @@ export default function Home() {
       {videos.map((videoSrc, index) => {
         const validIndex = currentVideoIndex % videos.length;
         const isActive = index === validIndex;
+        const isFirstVideo = index === 0;
         
         return (
           <video
@@ -203,6 +216,7 @@ export default function Home() {
             ref={(el) => {
               videoRefs.current[index] = el;
             }}
+            autoPlay={isFirstVideo}
             loop
             muted
             playsInline
@@ -213,8 +227,8 @@ export default function Home() {
             onError={(e) => {
               console.error('Error cargando video:', videoSrc);
             }}
-            onLoadedData={() => {
-              // Cuando el video se carga, si es el activo, reproducirlo
+            onCanPlay={() => {
+              // Reproducir automáticamente cuando el video puede reproducirse
               if (isActive && videoRefs.current[index]) {
                 const video = videoRefs.current[index];
                 if (video && video.paused) {
