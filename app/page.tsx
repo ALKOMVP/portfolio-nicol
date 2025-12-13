@@ -620,6 +620,20 @@ export default function Home() {
               if (isActive && videoRefs.current[index]) {
                 const video = videoRefs.current[index];
                 if (video.paused) {
+                  video.muted = true;
+                  video.playsInline = true;
+                  video.play().catch(() => {});
+                }
+              }
+            }}
+            onTimeUpdate={() => {
+              // En mobile, verificar periódicamente que el video esté reproduciéndose
+              if (isMobile && isActive && videoRefs.current[index]) {
+                const video = videoRefs.current[index];
+                // Solo verificar cada segundo para no sobrecargar
+                if (video && video.paused && video.readyState >= 2 && Math.floor(video.currentTime) % 1 === 0) {
+                  video.muted = true;
+                  video.playsInline = true;
                   video.play().catch(() => {});
                 }
               }
