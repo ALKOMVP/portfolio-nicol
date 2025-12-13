@@ -9,6 +9,7 @@ interface StoredFile {
   downloadUrl?: string;
   viewUrl?: string;
   directUrl?: string;
+  alternativeUrl?: string;
   size?: string;
   createdTime?: string;
   modifiedTime?: string;
