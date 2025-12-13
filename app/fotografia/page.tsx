@@ -139,7 +139,7 @@ export default function FotografiaPage() {
                 <img
                   src={photo.url}
                   alt={photo.name}
-                  className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110"
+                  className="w-full h-64 object-contain bg-black transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
                   <span className="opacity-0 group-hover:opacity-100 text-white font-medium">
@@ -183,7 +183,7 @@ export default function FotografiaPage() {
             <img
               src={selectedPhoto.url}
               alt={selectedPhoto.name}
-              className="max-w-full max-h-[90vh] object-contain"
+              className="max-w-full max-h-[90vh] object-contain bg-black/50 rounded-lg"
             />
             <button
               onClick={() => setSelectedPhoto(null)}

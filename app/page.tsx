@@ -13,19 +13,24 @@ export default function Home() {
     '/videos/cabaret-video.mp4',
   ];
 
-  // Precargar videos en segundo plano (el primero se carga automáticamente por el elemento video)
+  // Precargar videos en segundo plano con máxima calidad
   useEffect(() => {
     // Habilitar scroll inmediatamente (el primer video se reproducirá automáticamente)
-    // Los demás videos se precargan en segundo plano
     setVideosLoaded(true);
     
-    // Precargar los demás videos en segundo plano
-    videos.slice(1).forEach((src) => {
+    // Precargar todos los videos en segundo plano con máxima calidad
+    videos.forEach((src) => {
       const video = document.createElement('video');
-      video.preload = 'auto';
+      video.preload = 'auto'; // Precargar completamente para mejor calidad
       video.src = src;
       video.muted = true;
       video.playsInline = true;
+      
+      // Forzar carga completa para máxima calidad
+      video.addEventListener('loadedmetadata', () => {
+        video.load(); // Recargar para asegurar mejor calidad
+      });
+      
       video.load();
     });
   }, [videos]);
@@ -220,7 +225,7 @@ export default function Home() {
             loop
             muted
             playsInline
-            preload="auto"
+            preload={isFirstVideo ? "auto" : "metadata"}
             className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
               isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
@@ -232,6 +237,41 @@ export default function Home() {
               if (isActive && videoRefs.current[index]) {
                 const video = videoRefs.current[index];
                 if (video && video.paused) {
+                  video.play().catch(() => {});
+                }
+              }
+            }}
+            onLoadedMetadata={() => {
+              // Mejorar calidad después de cargar metadata
+              if (videoRefs.current[index]) {
+                const video = videoRefs.current[index];
+                // Asegurar que el video se carga completamente para mejor calidad
+                if (video.readyState < 4) {
+                  // Forzar carga completa
+                  video.load();
+                }
+                // Si es el video activo, reproducir inmediatamente
+                if (isActive && video.paused) {
+                  video.play().catch(() => {});
+                }
+              }
+            }}
+            onLoadedData={() => {
+              // Cuando los datos están cargados, asegurar reproducción en alta calidad
+              if (isActive && videoRefs.current[index]) {
+                const video = videoRefs.current[index];
+                // Reproducir si está pausado y tiene datos suficientes
+                if (video.readyState >= 2 && video.paused) {
+                  video.play().catch(() => {});
+                }
+              }
+            }}
+            onCanPlayThrough={() => {
+              // Cuando el video puede reproducirse completamente sin interrupciones
+              if (isActive && videoRefs.current[index]) {
+                const video = videoRefs.current[index];
+                // Asegurar reproducción continua en alta calidad
+                if (video.paused) {
                   video.play().catch(() => {});
                 }
               }
