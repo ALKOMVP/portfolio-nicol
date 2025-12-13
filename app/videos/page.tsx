@@ -100,10 +100,11 @@ export default function VideosPage() {
                   <iframe
                     src={video.url}
                     className="w-full h-full border-0"
-                    allow="autoplay; encrypted-media; fullscreen"
+                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                     allowFullScreen
                     title={video.name}
                     loading="lazy"
+                    sandbox="allow-scripts allow-same-origin allow-presentation"
                   />
                 </div>
                 <div className="p-4">
@@ -120,7 +121,7 @@ export default function VideosPage() {
                           rel="noopener noreferrer"
                           className="text-blue-400 hover:text-blue-300 text-sm"
                         >
-                          Ver
+                          Ver en Drive
                         </a>
                       )}
                       {video.downloadUrl && (

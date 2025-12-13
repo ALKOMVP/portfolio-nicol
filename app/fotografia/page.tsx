@@ -121,23 +121,29 @@ export default function FotografiaPage() {
       {/* Modal de foto ampliada */}
       {selectedPhoto && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
           onClick={() => setSelectedPhoto(null)}
         >
-          <div className="relative max-w-5xl max-h-full">
+          <div className="relative max-w-7xl max-h-full w-full h-full flex items-center justify-center">
             <img
               src={selectedPhoto.viewUrl || selectedPhoto.url}
               alt={selectedPhoto.name}
-              className="max-w-full max-h-[90vh] object-contain bg-black/50 rounded-lg"
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onError={(e) => {
+                // Si falla la URL de alta calidad, intentar con la URL normal
+                if (selectedPhoto.viewUrl && e.currentTarget.src !== selectedPhoto.url) {
+                  e.currentTarget.src = selectedPhoto.url;
+                }
+              }}
             />
-            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-              <p className="text-white font-medium">{selectedPhoto.name}</p>
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between bg-black/70 px-4 py-2 rounded-lg">
+              <p className="text-white font-medium truncate mr-4">{selectedPhoto.name}</p>
               {selectedPhoto.downloadUrl && (
                 <a
                   href={selectedPhoto.downloadUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-400 hover:text-blue-300 text-sm"
+                  className="text-blue-400 hover:text-blue-300 text-sm whitespace-nowrap"
                   onClick={(e) => e.stopPropagation()}
                 >
                   Descargar
@@ -146,7 +152,7 @@ export default function FotografiaPage() {
             </div>
             <button
               onClick={() => setSelectedPhoto(null)}
-              className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white rounded-full p-3"
+              className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white rounded-full p-3 z-10"
             >
               <svg
                 className="w-6 h-6"

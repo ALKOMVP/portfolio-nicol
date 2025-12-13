@@ -49,18 +49,20 @@ export async function onRequestGet(context: {
 
     // Convertir a formato compatible con el frontend
     const photos = files.map((file: any) => {
-      // Generar URL directa de visualización de Google Drive
+      // URL directa de visualización en alta calidad (usar export=view para mejor calidad)
       const viewUrl = `https://drive.google.com/uc?export=view&id=${file.id}`;
       // URL de descarga
       const downloadUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
-      // Usar thumbnail si está disponible, sino usar la URL de visualización
-      const imageUrl = file.thumbnailLink || viewUrl;
+      // URL para thumbnail (más pequeña para el grid)
+      const thumbnailUrl = file.thumbnailLink 
+        ? file.thumbnailLink.replace(/=s\d+/, '=s400') // Tamaño mediano para thumbnails
+        : `https://drive.google.com/uc?export=view&id=${file.id}`;
 
       return {
         id: `drive-${file.id}`,
         name: file.name,
-        url: imageUrl, // URL de la imagen para mostrar
-        viewUrl: viewUrl, // URL para ver en tamaño completo
+        url: thumbnailUrl, // URL del thumbnail para el grid
+        viewUrl: viewUrl, // URL en alta calidad para el modal
         downloadUrl: downloadUrl,
         type: 'photo',
         source: 'google-drive',

@@ -49,20 +49,20 @@ export async function onRequestGet(context: {
 
     // Convertir a formato compatible con el frontend
     const videos = files.map((file: any) => {
-      // Generar URL directa de descarga/visualización
-      // Para videos, usamos la URL de visualización de Google Drive
-      const videoUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
-      // URL de visualización en iframe
+      // URL de visualización en iframe (preview de Google Drive)
       const viewUrl = `https://drive.google.com/file/d/${file.id}/preview`;
-      // URL alternativa para video directo (si el archivo está compartido públicamente)
-      const directUrl = `https://drive.google.com/uc?export=view&id=${file.id}`;
+      // URL directa para video (mejor calidad, requiere que el archivo esté compartido públicamente)
+      const directUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
+      // URL alternativa usando uc?export=view (puede funcionar mejor en algunos casos)
+      const alternativeUrl = `https://drive.google.com/uc?export=view&id=${file.id}`;
 
       return {
         id: `drive-${file.id}`,
         name: file.name,
-        url: viewUrl, // URL de preview para iframe
-        directUrl: directUrl, // URL directa alternativa
-        downloadUrl: videoUrl,
+        url: viewUrl, // URL de preview para iframe (recomendado)
+        directUrl: directUrl, // URL directa para descarga/reproducción
+        alternativeUrl: alternativeUrl, // URL alternativa
+        downloadUrl: directUrl,
         type: 'video',
         source: 'google-drive',
         size: file.size,
