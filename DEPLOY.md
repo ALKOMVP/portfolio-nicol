@@ -32,10 +32,11 @@ git push -u origin main
 6. Configuración del proyecto:
    - **Project name**: `portfolio-nicol`
    - **Production branch**: `main`
-   - **Framework preset**: `Next.js (Static HTML Export)`
+   - **Framework preset**: `Next.js`
    - **Build command**: `npm run build`
    - **Build output directory**: `.next`
    - **Root directory**: `/` (dejar vacío)
+   - **Node version**: `18` o superior
 7. Click en **Save and Deploy**
 
 ### Opción B: Usando Wrangler CLI

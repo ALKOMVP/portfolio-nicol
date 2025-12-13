@@ -26,4 +26,5 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: portfolio-nicol
           directory: .next
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
