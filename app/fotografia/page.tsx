@@ -122,124 +122,42 @@ export default function FotografiaPage() {
           </p>
         </div>
 
-        {/* Botón de carga */}
-        <div className="flex justify-center mb-12">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="px-8 py-4 glass rounded-lg hover-glow font-medium transition-all"
-          >
-            Cargar Imágenes
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-        </div>
-
         {isInitializing && (
-          <div className="text-center text-gray-400 mb-8">Cargando fotos guardadas...</div>
-        )}
-
-        {isLoading && (
-          <div className="text-center text-gray-400 mb-8">Subiendo imágenes...</div>
+          <div className="text-center text-gray-400 mb-8">Cargando fotos...</div>
         )}
 
         {/* Grid de fotos */}
-        {!isInitializing && allPhotos.length === 0 ? (
+        {!isInitializing && drivePhotos.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-500 text-xl">
-              No hay fotografías cargadas aún. ¡Comienza agregando algunas!
+              No hay fotografías disponibles aún.
             </p>
           </div>
         ) : (
-          <>
-            {drivePhotos.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 gradient-text">
-                  Fotos de Google Drive ({drivePhotos.length})
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {drivePhotos.map((photo) => (
-                    <div
-                      key={photo.id}
-                      className="relative group glass rounded-lg overflow-hidden hover-glow cursor-pointer bg-black"
-                      onClick={() => setSelectedPhoto(photo)}
-                    >
-                      <img
-                        src={photo.url}
-                        alt={photo.name}
-                        className="w-full h-64 object-contain transition-transform duration-300 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                        <span className="opacity-0 group-hover:opacity-100 text-white font-medium">
-                          Ver más
-                        </span>
-                      </div>
-                      <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                        Google Drive
-                      </div>
-                    </div>
-                  ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {drivePhotos.map((photo) => (
+              <div
+                key={photo.id}
+                className="relative group glass rounded-lg overflow-hidden hover-glow cursor-pointer bg-black"
+                onClick={() => setSelectedPhoto(photo)}
+              >
+                <img
+                  src={photo.url}
+                  alt={photo.name}
+                  className="w-full h-64 object-contain transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                  <span className="opacity-0 group-hover:opacity-100 text-white font-medium">
+                    Ver más
+                  </span>
+                </div>
+                <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                  Google Drive
                 </div>
               </div>
-            )}
-
-            {photos.length > 0 && (
-              <div className={drivePhotos.length > 0 ? 'mt-8' : ''}>
-                {drivePhotos.length > 0 && (
-                  <h2 className="text-2xl font-bold mb-4 gradient-text">
-                    Fotos Subidas
-                  </h2>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {photos.map((photo) => (
-                    <div
-                      key={photo.id}
-                      className="relative group glass rounded-lg overflow-hidden hover-glow cursor-pointer bg-black"
-                      onClick={() => setSelectedPhoto(photo)}
-                    >
-                      <img
-                        src={photo.url}
-                        alt={photo.name}
-                        className="w-full h-64 object-contain transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                        <span className="opacity-0 group-hover:opacity-100 text-white font-medium">
-                          Ver más
-                        </span>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removePhoto(photo.id);
-                        }}
-                        className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
+            ))}
+          </div>
         )}
       </div>
 
