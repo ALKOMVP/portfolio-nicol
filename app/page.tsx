@@ -8,7 +8,7 @@ interface HomeVideo {
   name: string;
   url: string;
   alternativeUrl?: string;
-  thirdUrl?: string;
+  directUrl?: string;
 }
 
 export default function Home() {
@@ -28,9 +28,9 @@ export default function Home() {
           const mappedVideos: HomeVideo[] = driveVideos.map(v => ({
             id: v.id,
             name: v.name,
-            url: v.url,
+            url: v.url, // URL de preview para iframe
             alternativeUrl: v.alternativeUrl,
-            thirdUrl: (v as any).thirdUrl,
+            directUrl: v.directUrl, // URL directa para fallback
           }));
           setVideos(mappedVideos);
         } else {
@@ -440,43 +440,57 @@ export default function Home() {
         const isFirstVideo = index === 0;
         
         return (
-          <video
+          <div
             key={`video-${videoData.id}-${index}`}
+            className={`absolute top-0 left-0 w-full h-full transition-opacity duration-300 ${
+              isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+            }`}
+          >
+            <iframe
+              src={videoData.url}
+              className="w-full h-full border-0"
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+              allowFullScreen
+              title={videoData.name}
+              style={{ 
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+          </div>
+        );
+      })}
+      
+      {/* Fallback: Intentar con elementos video si iframes no funcionan */}
+      {videos.length > 0 && videos.map((videoData, index) => {
+        const validIndex = currentVideoIndex % videos.length;
+        const isActive = index === validIndex;
+        const isFirstVideo = index === 0;
+        
+        // Solo mostrar si hay directUrl disponible
+        if (!videoData.directUrl) return null;
+        
+        return (
+          <video
+            key={`video-fallback-${videoData.id}-${index}`}
             ref={(el) => {
-              videoRefs.current[index] = el;
+              if (el) videoRefs.current[index] = el;
             }}
             autoPlay={isFirstVideo}
             loop
             muted
             playsInline
             preload="auto"
-            x5-video-player-type="h5"
-            x5-video-player-fullscreen="true"
-            x5-video-orientation="portraint"
-            webkit-playsinline="true"
-            x-webkit-airplay="allow"
             className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
-              isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+              isActive ? 'opacity-0 z-0' : 'opacity-0 z-0 pointer-events-none'
             }`}
+            style={{ display: 'none' }}
             onError={(e) => {
-              const video = e.currentTarget;
-              console.error('Error cargando video:', video.src, video.error);
-              
-              // Intentar con URLs alternativas en orden
-              if (videoData.alternativeUrl && video.src !== videoData.alternativeUrl && video.src !== videoData.thirdUrl) {
-                console.log('Intentando URL alternativa:', videoData.alternativeUrl);
-                video.src = videoData.alternativeUrl;
-              } else if (videoData.thirdUrl && video.src !== videoData.thirdUrl) {
-                console.log('Intentando tercera URL:', videoData.thirdUrl);
-                video.src = videoData.thirdUrl;
-              } else {
-                console.error('Todas las URLs fallaron para el video:', videoData.name);
-                // Mostrar mensaje de error visual
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'absolute inset-0 flex items-center justify-center bg-black/80 text-white z-50';
-                errorDiv.textContent = `Error cargando: ${videoData.name}`;
-                video.parentElement?.appendChild(errorDiv);
-              }
+              console.error('Error cargando video directo:', videoData.name);
             }}
             onCanPlay={() => {
               // Reproducir automáticamente cuando el video puede reproducirse
@@ -606,8 +620,8 @@ export default function Home() {
             {videoData.alternativeUrl && (
               <source src={videoData.alternativeUrl} type="video/mp4" />
             )}
-            {videoData.thirdUrl && (
-              <source src={videoData.thirdUrl} type="video/mp4" />
+            {videoData.directUrl && (
+              <source src={videoData.directUrl} type="video/mp4" />
             )}
             Tu navegador no soporta videos HTML5.
           </video>
