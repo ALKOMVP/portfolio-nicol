@@ -45,40 +45,10 @@ export default function Home() {
     // Intentar reproducir el video oculto para desbloquear autoplay
     unlockVideo.play().catch(() => {});
 
-    // Técnica optimizada para mobile: cargar y reproducir el primer video lo más rápido posible
+    // Técnica optimizada para desktop
     const tryAutoPlay = async () => {
       const firstVideo = videoRefs.current[0];
-      if (!firstVideo) return;
-      
-      // En mobile, usar estrategia más ligera y rápida
-      if (isMobile) {
-        // Asegurar atributos mínimos necesarios
-        firstVideo.muted = true;
-        firstVideo.playsInline = true;
-        firstVideo.setAttribute('autoplay', '');
-        firstVideo.setAttribute('muted', '');
-        firstVideo.setAttribute('playsinline', '');
-        firstVideo.setAttribute('webkit-playsinline', 'true');
-        firstVideo.setAttribute('x5-video-player-type', 'h5');
-        
-        // En mobile, solo intentar reproducir cuando tenga datos suficientes
-        const playWhenReady = () => {
-          if (firstVideo.readyState >= 2) { // HAVE_CURRENT_DATA
-            firstVideo.play().then(() => {
-              if (!firstVideo.paused) {
-                setUserInteracted(true);
-              }
-            }).catch(() => {});
-          }
-        };
-        
-        // Escuchar eventos de carga optimizados para mobile
-        firstVideo.addEventListener('loadedmetadata', playWhenReady, { once: true });
-        firstVideo.addEventListener('loadeddata', playWhenReady, { once: true });
-        firstVideo.addEventListener('canplay', playWhenReady, { once: true });
-        
-        return;
-      }
+      if (!firstVideo || isMobile) return; // En mobile se maneja en otro useEffect
       
       // En desktop, usar estrategia más agresiva
       firstVideo.muted = true;
@@ -112,28 +82,8 @@ export default function Home() {
       }
     };
 
-    // En mobile, intentar solo cuando el video esté listo (más eficiente)
-    if (isMobile) {
-      const firstVideo = videoRefs.current[0];
-      if (firstVideo) {
-        const playWhenReady = () => {
-          if (firstVideo.readyState >= 2) {
-            firstVideo.muted = true;
-            firstVideo.playsInline = true;
-            firstVideo.play().then(() => {
-              if (!firstVideo.paused) {
-                setUserInteracted(true);
-              }
-            }).catch(() => {});
-          }
-        };
-        
-        firstVideo.addEventListener('loadedmetadata', playWhenReady, { once: true });
-        firstVideo.addEventListener('loadeddata', playWhenReady, { once: true });
-        firstVideo.addEventListener('canplay', playWhenReady, { once: true });
-      }
-    } else {
-      // En desktop, usar estrategia más agresiva
+    // En desktop, usar estrategia más agresiva
+    if (!isMobile) {
       tryAutoPlay();
       
       if (document.readyState === 'complete') {
@@ -208,9 +158,19 @@ export default function Home() {
       }
     });
     
-    // En mobile, cargar el video solo cuando se necesita (lazy loading)
-    if (isMobile && currentVideo.readyState === 0) {
-      currentVideo.load();
+    // En mobile, asegurar que el video se carga si no tiene datos
+    if (isMobile) {
+      // Si el video no tiene datos cargados, forzar carga
+      if (currentVideo.readyState === 0 || currentVideo.readyState === 1) {
+        currentVideo.load();
+      }
+      
+      // También precargar el siguiente video para anticipar el scroll
+      const nextIndex = (validIndex + 1) % videos.length;
+      const nextVideo = videoRefs.current[nextIndex];
+      if (nextVideo && (nextVideo.readyState === 0 || nextVideo.readyState === 1)) {
+        nextVideo.load();
+      }
     }
     
     // Asegurar todos los atributos necesarios para móviles
@@ -486,7 +446,7 @@ export default function Home() {
             loop
             muted
             playsInline
-            preload={isMobile ? (isFirstVideo ? "metadata" : "none") : "auto"}
+            preload={isMobile ? (isFirstVideo ? "auto" : "none") : "auto"}
             x5-video-player-type="h5"
             x5-video-player-fullscreen="true"
             x5-video-orientation="portraint"
