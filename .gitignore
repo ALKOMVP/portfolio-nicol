@@ -19,6 +19,9 @@
 .DS_Store
 *.pem
 
+# optimized videos (keep originals in repo)
+public/videos/optimized/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

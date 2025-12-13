@@ -14,26 +14,46 @@ export default function Home() {
 
   const handleNextVideo = useCallback(() => {
     setCurrentVideoIndex((prevIndex) => {
-      const nextIndex = (prevIndex + 1) % videos.length;
+      // Asegurar que siempre tenemos un índice válido
+      const currentValidIndex = prevIndex % videos.length;
+      const nextIndex = (currentValidIndex + 1) % videos.length;
       return nextIndex;
     });
   }, [videos.length]);
 
   const handlePreviousVideo = useCallback(() => {
     setCurrentVideoIndex((prevIndex) => {
-      const prevVideoIndex = prevIndex === 0 ? videos.length - 1 : prevIndex - 1;
+      // Asegurar que siempre tenemos un índice válido
+      const currentValidIndex = prevIndex % videos.length;
+      const prevVideoIndex = currentValidIndex === 0 ? videos.length - 1 : currentValidIndex - 1;
       return prevVideoIndex;
     });
   }, [videos.length]);
 
   useEffect(() => {
-    if (videoRef.current) {
+    if (videoRef.current && videos[currentVideoIndex]) {
+      // Asegurar que el índice es válido
+      const validIndex = currentVideoIndex % videos.length;
+      const videoSrc = videos[validIndex];
+      
+      // Cargar y reproducir el video
+      videoRef.current.src = videoSrc;
       videoRef.current.load();
-      videoRef.current.play().catch((error) => {
-        console.log('Error al reproducir video:', error);
-      });
+      
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.log('Error al reproducir video:', error);
+          // Intentar reproducir nuevamente después de un breve delay
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current.play().catch(() => {});
+            }
+          }, 100);
+        });
+      }
     }
-  }, [currentVideoIndex]);
+  }, [currentVideoIndex, videos]);
 
   // Prevenir scroll del body cuando está en la página de inicio
   useEffect(() => {
@@ -129,31 +149,39 @@ export default function Home() {
       onWheel={(e) => e.preventDefault()}
     >
       {/* Video de fondo */}
+      {videos.length > 0 && (
         <video
-          key={currentVideoIndex}
+          key={`video-${currentVideoIndex % videos.length}`}
           ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
           className="absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000"
+          onError={(e) => {
+            console.error('Error cargando video:', videos[currentVideoIndex % videos.length]);
+          }}
         >
-          <source src={videos[currentVideoIndex]} type="video/mp4" />
+          <source src={videos[currentVideoIndex % videos.length]} type="video/mp4" />
           Tu navegador no soporta videos HTML5.
         </video>
+      )}
 
       {/* Indicador de video actual */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
-        {videos.map((_, index) => (
-          <div
-            key={index}
-            className={`h-1 rounded-full transition-all duration-500 ${
-              index === currentVideoIndex
-                ? 'bg-white w-8'
-                : 'bg-white/40 w-2'
-            }`}
-          />
-        ))}
+        {videos.map((_, index) => {
+          const activeIndex = currentVideoIndex % videos.length;
+          return (
+            <div
+              key={index}
+              className={`h-1 rounded-full transition-all duration-500 ${
+                index === activeIndex
+                  ? 'bg-white w-8'
+                  : 'bg-white/40 w-2'
+              }`}
+            />
+          );
+        })}
       </div>
     </div>
   );
