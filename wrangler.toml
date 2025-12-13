@@ -1,4 +1,4 @@
-name = "portfolio-nicol"
-compatibility_date = "2024-01-01"
-pages_build_output_dir = ".next"
+# Cloudflare Pages configuration
+# This file is optional - Cloudflare Pages can work without it
+# For Pages, use the dashboard or wrangler pages deploy command
 

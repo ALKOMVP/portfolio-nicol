@@ -1,3 +1,9 @@
+# Cloudflare Pages se integra directamente con GitHub
+# Este workflow es opcional - Cloudflare Pages puede construir y desplegar automáticamente
+# Si prefieres usar este workflow, necesitas configurar los secrets:
+# - CLOUDFLARE_API_TOKEN
+# - CLOUDFLARE_ACCOUNT_ID
+
 name: Deploy to Cloudflare Pages
 
 on:
