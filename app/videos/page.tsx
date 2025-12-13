@@ -138,36 +138,43 @@ export default function VideosPage() {
               >
                 <div className="relative w-full h-full flex items-center justify-center">
                   <div className="w-full h-full max-w-[95vw] max-h-[95vh] bg-black">
-                    <iframe
-                      src={selectedVideo.url}
-                      className="w-full h-full border-0"
-                      allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                      allowFullScreen
-                      title={selectedVideo.name}
-                      onLoad={(e) => {
-                        // Intentar hacer clic automáticamente en el botón de play del iframe
-                        // Nota: Esto puede estar bloqueado por políticas de seguridad del navegador
-                        try {
-                          const iframe = e.currentTarget;
-                          if (iframe.contentWindow) {
-                            // Intentar encontrar y hacer clic en el botón de play
-                            setTimeout(() => {
-                              try {
-                                const playButton = iframe.contentDocument?.querySelector('button[aria-label*="Play"], button[aria-label*="Reproducir"], .play-button, [data-id="play"]');
-                                if (playButton) {
-                                  (playButton as HTMLElement).click();
-                                }
-                              } catch (error) {
-                                // Si falla por políticas de seguridad, el usuario tendrá que hacer clic manualmente
-                                console.log('No se puede acceder al contenido del iframe por políticas de seguridad');
-                              }
-                            }, 500);
+                    {/* Intentar usar video HTML5 si hay directUrl disponible, sino usar iframe */}
+                    {selectedVideo.directUrl ? (
+                      <video
+                        src={selectedVideo.directUrl}
+                        className="w-full h-full object-contain"
+                        controls
+                        autoPlay
+                        muted={false}
+                        playsInline
+                        onLoadedData={(e) => {
+                          // Asegurar que se reproduzca cuando tenga datos
+                          const video = e.currentTarget;
+                          if (video.paused) {
+                            video.play().catch(() => {
+                              // Si falla autoplay, intentar reproducir sin mute
+                              video.muted = false;
+                              video.play().catch(() => {});
+                            });
                           }
-                        } catch (error) {
-                          // Ignorar errores de políticas de seguridad
-                        }
-                      }}
-                    />
+                        }}
+                        onCanPlay={(e) => {
+                          // Intentar reproducir cuando puede reproducirse
+                          const video = e.currentTarget;
+                          if (video.paused) {
+                            video.play().catch(() => {});
+                          }
+                        }}
+                      />
+                    ) : (
+                      <iframe
+                        src={selectedVideo.url}
+                        className="w-full h-full border-0"
+                        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                        allowFullScreen
+                        title={selectedVideo.name}
+                      />
+                    )}
                   </div>
                   <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between bg-black/70 px-4 py-2 rounded-lg">
                     <p className="text-white font-medium truncate mr-4">{selectedVideo.name}</p>
