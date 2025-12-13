@@ -103,6 +103,12 @@ export default function FotografiaPage() {
                   alt={photo.name}
                   className="w-full h-64 object-contain transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
+                  onError={(e) => {
+                    // Si falla el thumbnail, intentar con la URL de visualización
+                    if (photo.viewUrl && e.currentTarget.src !== photo.viewUrl) {
+                      e.currentTarget.src = photo.viewUrl;
+                    }
+                  }}
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
                   <span className="opacity-0 group-hover:opacity-100 text-white font-medium">
