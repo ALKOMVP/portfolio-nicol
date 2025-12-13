@@ -8,6 +8,7 @@ interface HomeVideo {
   name: string;
   url: string;
   alternativeUrl?: string;
+  thirdUrl?: string;
 }
 
 export default function Home() {
@@ -27,8 +28,9 @@ export default function Home() {
           const mappedVideos: HomeVideo[] = driveVideos.map(v => ({
             id: v.id,
             name: v.name,
-            url: v.directUrl || v.url,
+            url: v.url,
             alternativeUrl: v.alternativeUrl,
+            thirdUrl: (v as any).thirdUrl,
           }));
           setVideos(mappedVideos);
         } else {
@@ -457,10 +459,23 @@ export default function Home() {
               isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
             onError={(e) => {
-              console.error('Error cargando video:', videoData.url);
-              // Intentar con URL alternativa si está disponible
-              if (videoData.alternativeUrl && e.currentTarget.src !== videoData.alternativeUrl) {
-                e.currentTarget.src = videoData.alternativeUrl;
+              const video = e.currentTarget;
+              console.error('Error cargando video:', video.src, video.error);
+              
+              // Intentar con URLs alternativas en orden
+              if (videoData.alternativeUrl && video.src !== videoData.alternativeUrl && video.src !== videoData.thirdUrl) {
+                console.log('Intentando URL alternativa:', videoData.alternativeUrl);
+                video.src = videoData.alternativeUrl;
+              } else if (videoData.thirdUrl && video.src !== videoData.thirdUrl) {
+                console.log('Intentando tercera URL:', videoData.thirdUrl);
+                video.src = videoData.thirdUrl;
+              } else {
+                console.error('Todas las URLs fallaron para el video:', videoData.name);
+                // Mostrar mensaje de error visual
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'absolute inset-0 flex items-center justify-center bg-black/80 text-white z-50';
+                errorDiv.textContent = `Error cargando: ${videoData.name}`;
+                video.parentElement?.appendChild(errorDiv);
               }
             }}
             onCanPlay={() => {

@@ -39,16 +39,20 @@ export async function onRequestGet(context: {
     // Convertir a formato compatible con el frontend
     // Para la portada, necesitamos URLs directas para usar en elementos <video>
     const videos = files.map((file: any) => {
-      // URL directa para video (mejor para elementos <video> HTML5)
-      const directUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
-      // URL alternativa usando uc?export=view
-      const alternativeUrl = `https://drive.google.com/uc?export=view&id=${file.id}`;
+      // Múltiples URLs para intentar, en orden de preferencia
+      // 1. URL con uc?export=view (a veces funciona mejor)
+      const viewUrl = `https://drive.google.com/uc?export=view&id=${file.id}`;
+      // 2. URL con uc?export=download
+      const downloadUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
+      // 3. URL alternativa con confirmación
+      const altUrl = `https://drive.google.com/uc?id=${file.id}&export=download`;
 
       return {
         id: `drive-${file.id}`,
         name: file.name,
-        url: directUrl, // URL directa para elemento <video>
-        alternativeUrl: alternativeUrl,
+        url: viewUrl, // Intentar primero con view
+        alternativeUrl: downloadUrl, // Fallback a download
+        thirdUrl: altUrl, // Tercera opción
         type: 'video',
         source: 'google-drive',
         size: file.size,
