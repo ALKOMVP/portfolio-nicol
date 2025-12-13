@@ -1,57 +1,18 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { getGoogleDriveHomeVideos } from '@/lib/api-storage';
-
-interface HomeVideo {
-  id: string;
-  name: string;
-  url: string;
-  alternativeUrl?: string;
-  directUrl?: string;
-}
 
 export default function Home() {
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [videosLoaded, setVideosLoaded] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
-  const [videos, setVideos] = useState<HomeVideo[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Cargar videos de Google Drive para la portada
-  useEffect(() => {
-    const loadHomeVideos = async () => {
-      try {
-        const driveVideos = await getGoogleDriveHomeVideos();
-        if (driveVideos.length > 0) {
-          const mappedVideos: HomeVideo[] = driveVideos.map(v => ({
-            id: v.id,
-            name: v.name,
-            url: v.url, // URL de preview para iframe
-            alternativeUrl: v.alternativeUrl,
-            directUrl: v.directUrl, // URL directa para fallback
-          }));
-          setVideos(mappedVideos);
-        } else {
-          // Fallback a videos locales si no hay videos en Google Drive
-          setVideos([
-            { id: 'local-1', name: 'background-video', url: '/videos/background-video.mp4' },
-            { id: 'local-2', name: 'cabaret-video', url: '/videos/cabaret-video.mp4' },
-          ]);
-        }
-      } catch (error) {
-        console.error('Error cargando videos de la portada:', error);
-        // Fallback a videos locales en caso de error
-        setVideos([
-          { id: 'local-1', name: 'background-video', url: '/videos/background-video.mp4' },
-          { id: 'local-2', name: 'cabaret-video', url: '/videos/cabaret-video.mp4' },
-        ]);
-      }
-    };
-    
-    loadHomeVideos();
-  }, []);
+  const videos = [
+    '/videos/background-video.mp4',
+    '/videos/cabaret-video.mp4',
+  ];
 
   // Técnica agresiva: Crear un video oculto para desbloquear autoplay
   useEffect(() => {
@@ -143,7 +104,9 @@ export default function Home() {
 
     return () => {
       window.removeEventListener('load', tryAutoPlay);
-      document.body.removeChild(unlockVideo);
+      if (document.body.contains(unlockVideo)) {
+        document.body.removeChild(unlockVideo);
+      }
     };
   }, []);
 
@@ -432,63 +395,32 @@ export default function Home() {
       }}
     >
       {/* Videos pre-cargados - todos renderizados pero solo uno visible */}
-      {videos.length > 0 && videos.map((videoData, index) => {
+      {videos.map((videoSrc, index) => {
         const validIndex = currentVideoIndex % videos.length;
         const isActive = index === validIndex;
         const isFirstVideo = index === 0;
-        
-        return (
-          <div
-            key={`video-${videoData.id}-${index}`}
-            className={`absolute top-0 left-0 w-full h-full transition-opacity duration-300 ${
-              isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-            }`}
-          >
-            <iframe
-              src={videoData.url}
-              className="w-full h-full border-0"
-              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-              allowFullScreen
-              title={videoData.name}
-              style={{ 
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
-              }}
-            />
-          </div>
-        );
-      })}
-      
-      {/* Fallback: Intentar con elementos video si iframes no funcionan */}
-      {videos.length > 0 && videos.map((videoData, index) => {
-        const validIndex = currentVideoIndex % videos.length;
-        const isActive = index === validIndex;
-        const isFirstVideo = index === 0;
-        
-        // Solo mostrar si hay directUrl disponible
-        if (!videoData.directUrl) return null;
         
         return (
           <video
-            key={`video-fallback-${videoData.id}-${index}`}
+            key={`video-${index}`}
             ref={(el) => {
-              if (el) videoRefs.current[index] = el;
+              videoRefs.current[index] = el;
             }}
             autoPlay={isFirstVideo}
             loop
             muted
             playsInline
             preload="auto"
+            x5-video-player-type="h5"
+            x5-video-player-fullscreen="true"
+            x5-video-orientation="portraint"
+            webkit-playsinline="true"
+            x-webkit-airplay="allow"
             className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
-              isActive ? 'opacity-0 z-0' : 'opacity-0 z-0 pointer-events-none'
+              isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
-            style={{ display: 'none' }}
             onError={(e) => {
-              console.error('Error cargando video directo:', videoData.name);
+              console.error('Error cargando video:', videoSrc);
             }}
             onCanPlay={() => {
               // Reproducir automáticamente cuando el video puede reproducirse
@@ -614,13 +546,7 @@ export default function Home() {
               }
             }}
           >
-            <source src={videoData.url} type="video/mp4" />
-            {videoData.alternativeUrl && (
-              <source src={videoData.alternativeUrl} type="video/mp4" />
-            )}
-            {videoData.directUrl && (
-              <source src={videoData.directUrl} type="video/mp4" />
-            )}
+            <source src={videoSrc} type="video/mp4" />
             Tu navegador no soporta videos HTML5.
           </video>
         );
@@ -694,4 +620,3 @@ export default function Home() {
     </div>
   );
 }
-
