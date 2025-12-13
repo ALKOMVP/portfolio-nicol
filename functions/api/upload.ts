@@ -30,7 +30,15 @@ export async function onRequestPost(context: {
 
     const fileId = `${type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    
+    // Convertir ArrayBuffer a base64 de forma segura
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = btoa(binary);
     const dataUrl = `data:${file.type};base64,${base64}`;
 
     // Guardar archivo completo en KV (base64)
