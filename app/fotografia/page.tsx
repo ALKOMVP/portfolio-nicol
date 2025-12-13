@@ -130,11 +130,12 @@ export default function FotografiaPage() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
           onClick={() => setSelectedPhoto(null)}
         >
-          <div className="relative max-w-7xl max-h-full w-full h-full flex items-center justify-center">
+          <div className="relative w-full h-full flex items-center justify-center">
             <img
               src={selectedPhoto.viewUrl || selectedPhoto.url}
               alt={selectedPhoto.name}
-              className="max-w-full max-h-full object-contain rounded-lg"
+              className="max-w-[95vw] max-h-[95vh] w-auto h-auto object-contain"
+              style={{ imageRendering: 'high-quality' }}
               onError={(e) => {
                 // Si falla la URL de alta calidad, intentar con la URL normal
                 if (selectedPhoto.viewUrl && e.currentTarget.src !== selectedPhoto.url) {

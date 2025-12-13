@@ -90,56 +90,83 @@ export default function VideosPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {driveVideos.map((video) => (
-              <div
-                key={video.id}
-                className="relative group glass rounded-lg overflow-hidden hover-glow"
-              >
-                <div className="relative w-full h-64 bg-black flex items-center justify-center">
-                  <iframe
-                    src={video.url}
-                    className="w-full h-full border-0"
-                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                    allowFullScreen
-                    title={video.name}
-                    loading="lazy"
-                    sandbox="allow-scripts allow-same-origin allow-presentation"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-medium mb-2 truncate" title={video.name}>
-                    {video.name}
-                  </h3>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">Google Drive</span>
-                    <div className="flex gap-2">
-                      {video.directUrl && (
-                        <a
-                          href={video.directUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300 text-sm"
-                        >
-                          Ver en Drive
-                        </a>
-                      )}
-                      {video.downloadUrl && (
-                        <a
-                          href={video.downloadUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300 text-sm"
-                        >
-                          Descargar
-                        </a>
-                      )}
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {driveVideos.map((video) => (
+                <div
+                  key={video.id}
+                  className="relative group glass rounded-lg overflow-hidden hover-glow cursor-pointer"
+                  onClick={() => setSelectedVideo(video)}
+                >
+                  <div className="relative w-full h-64 bg-black flex items-center justify-center">
+                    <iframe
+                      src={video.url}
+                      className="w-full h-full border-0"
+                      allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                      allowFullScreen
+                      title={video.name}
+                      loading="lazy"
+                      sandbox="allow-scripts allow-same-origin allow-presentation"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 text-white font-medium">
+                        Ver en pantalla completa
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-medium mb-2 truncate" title={video.name}>
+                      {video.name}
+                    </h3>
+                    <div className="flex items-center">
+                      <span className="text-xs text-gray-400">Google Drive</span>
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Modal de video ampliado */}
+            {selectedVideo && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
+                onClick={() => setSelectedVideo(null)}
+              >
+                <div className="relative w-full h-full flex items-center justify-center">
+                  <div className="w-full h-full max-w-[95vw] max-h-[95vh] bg-black">
+                    <iframe
+                      src={selectedVideo.url}
+                      className="w-full h-full border-0"
+                      allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                      allowFullScreen
+                      title={selectedVideo.name}
+                    />
+                  </div>
+                  <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between bg-black/70 px-4 py-2 rounded-lg">
+                    <p className="text-white font-medium truncate mr-4">{selectedVideo.name}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedVideo(null)}
+                    className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white rounded-full p-3 z-10"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>
