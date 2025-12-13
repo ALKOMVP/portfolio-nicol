@@ -14,23 +14,42 @@ export default function Home() {
     '/videos/cabaret-video.mp4',
   ];
 
-  // Intentar reproducir automáticamente sin interacción del usuario
+  // Técnica agresiva: Crear un video oculto para desbloquear autoplay
   useEffect(() => {
-    // Técnica 1: Intentar reproducir inmediatamente cuando el componente se monta
+    // Crear un video oculto que se reproduce primero para "desbloquear" el autoplay
+    const unlockVideo = document.createElement('video');
+    unlockVideo.style.position = 'fixed';
+    unlockVideo.style.top = '-9999px';
+    unlockVideo.style.width = '1px';
+    unlockVideo.style.height = '1px';
+    unlockVideo.muted = true;
+    unlockVideo.playsInline = true;
+    unlockVideo.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAg1tZGF0AAACrgYF//+q3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE0OCByMjA1MSBhMDhhZTg1IC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAxNSAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTEgcmVmPTMgZGVibG9jaz0xOjA6MCBhbmFseXNlPTB4MzoweDExMyBtZT1oZXggc3VibWU9NyBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0xIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MSA4eDhkY3Q9MSBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiB0aHJlYWRzPTEgbG9va2FoZWFkX3RocmVhZHM9MSBzbGljZWRfdGhyZWFkcz0wIG5yPTAgZGVjaW1hdGU9MSBpbnRlcmxhY2VkPTAgYmx1cmF5X2NvbXBhdD0wIGNvbnN0cmFpbmVkX2ludHJhPTAgYmZyYW1lcz0zIGJfcHlyYW1pZD0yIGJfYWRhcHQ9MSBiX2JpYXM9MCBkaXJlY3Q9MSB3ZWlnaHRiPTEgb3Blbl9nb3A9MCB3ZWlnaHRwPTIga2V5aW50PTI1MCBrZXlpbnRfbWluPTI1IHNjZW5lY3V0PTQwIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9NDAgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMAA=';
+    document.body.appendChild(unlockVideo);
+    
+    // Intentar reproducir el video oculto para desbloquear autoplay
+    unlockVideo.play().catch(() => {});
+
+    // Técnica agresiva: Intentar reproducir el primer video múltiples veces
     const tryAutoPlay = async () => {
       const firstVideo = videoRefs.current[0];
       if (firstVideo) {
-        // Asegurar todos los atributos necesarios para autoplay en iOS
+        // Asegurar todos los atributos necesarios
         firstVideo.muted = true;
         firstVideo.playsInline = true;
         firstVideo.setAttribute('autoplay', '');
         firstVideo.setAttribute('muted', '');
         firstVideo.setAttribute('playsinline', '');
+        firstVideo.setAttribute('webkit-playsinline', 'true');
+        firstVideo.setAttribute('x5-video-player-type', 'h5');
+        firstVideo.setAttribute('x5-video-player-fullscreen', 'true');
         
         // Intentar reproducir múltiples veces con diferentes estrategias
         const attempts = [
           () => firstVideo.play(),
+          () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 50)),
           () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 100)),
+          () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 200)),
           () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 300)),
           () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 500)),
         ];
@@ -54,29 +73,38 @@ export default function Home() {
 
     // Intentar cuando el DOM esté completamente listo
     if (document.readyState === 'complete') {
+      setTimeout(tryAutoPlay, 50);
       setTimeout(tryAutoPlay, 100);
+      setTimeout(tryAutoPlay, 200);
     } else {
-      window.addEventListener('load', tryAutoPlay, { once: true });
+      window.addEventListener('load', () => {
+        setTimeout(tryAutoPlay, 50);
+        setTimeout(tryAutoPlay, 100);
+      }, { once: true });
     }
 
     // Intentar cuando el video tenga datos cargados
     const firstVideo = videoRefs.current[0];
     if (firstVideo) {
       const playWhenReady = () => {
-        if (firstVideo.readyState >= 2) { // HAVE_CURRENT_DATA
-          firstVideo.muted = true;
-          firstVideo.playsInline = true;
-          firstVideo.play().catch(() => {});
-        }
+        firstVideo.muted = true;
+        firstVideo.playsInline = true;
+        firstVideo.play().then(() => {
+          if (!firstVideo.paused) {
+            setUserInteracted(true);
+          }
+        }).catch(() => {});
       };
       
       firstVideo.addEventListener('loadeddata', playWhenReady, { once: true });
       firstVideo.addEventListener('canplay', playWhenReady, { once: true });
       firstVideo.addEventListener('canplaythrough', playWhenReady, { once: true });
+      firstVideo.addEventListener('loadedmetadata', playWhenReady, { once: true });
     }
 
     return () => {
       window.removeEventListener('load', tryAutoPlay);
+      document.body.removeChild(unlockVideo);
     };
   }, []);
 
@@ -95,86 +123,121 @@ export default function Home() {
     });
   }, [videos]);
 
-  // Cambiar video cuando cambia el índice
+  // Cambiar video cuando cambia el índice - VERSIÓN MEJORADA
   useEffect(() => {
     const validIndex = currentVideoIndex % videos.length;
     const currentVideo = videoRefs.current[validIndex];
     
-    if (currentVideo) {
-      // Pausar todos los videos primero
-      videoRefs.current.forEach((video, index) => {
-        if (video && index !== validIndex) {
-          video.pause();
-          video.currentTime = 0;
-        }
-      });
-      
-      // Asegurar todos los atributos necesarios para móviles
+    if (!currentVideo) return;
+    
+    // Pausar todos los videos primero
+    videoRefs.current.forEach((video, index) => {
+      if (video && index !== validIndex) {
+        video.pause();
+        video.currentTime = 0;
+      }
+    });
+    
+    // Asegurar todos los atributos necesarios para móviles
+    currentVideo.muted = true;
+    currentVideo.playsInline = true;
+    currentVideo.setAttribute('autoplay', '');
+    currentVideo.setAttribute('muted', '');
+    currentVideo.setAttribute('playsinline', '');
+    currentVideo.setAttribute('webkit-playsinline', 'true');
+    currentVideo.setAttribute('x5-video-player-type', 'h5');
+    currentVideo.setAttribute('x5-video-player-fullscreen', 'true');
+    
+    // Función agresiva para reproducir el video
+    const forcePlay = async () => {
+      // Asegurar atributos antes de cada intento
       currentVideo.muted = true;
       currentVideo.playsInline = true;
-      currentVideo.setAttribute('autoplay', '');
-      currentVideo.setAttribute('muted', '');
-      currentVideo.setAttribute('playsinline', '');
-      currentVideo.currentTime = 0;
       
-      // Función para intentar reproducir el video
-      const tryPlay = async () => {
-        // Asegurar que el video tenga datos cargados
-        if (currentVideo.readyState < 2) {
-          // Si no tiene datos suficientes, esperar a que los cargue
-          const playWhenReady = () => {
-            currentVideo.muted = true;
-            currentVideo.playsInline = true;
-            currentVideo.play().catch(() => {});
-          };
-          
-          currentVideo.addEventListener('loadeddata', playWhenReady, { once: true });
-          currentVideo.addEventListener('canplay', playWhenReady, { once: true });
-          
-          // Forzar carga del video si es necesario
-          if (currentVideo.readyState === 0) {
-            currentVideo.load();
-          }
-          
-          return;
-        }
+      // Si el video no tiene datos, forzar carga primero
+      if (currentVideo.readyState < 2) {
+        currentVideo.load();
         
-        // Si tiene datos suficientes, intentar reproducir inmediatamente
-        try {
-          await currentVideo.play();
-          // Verificar que realmente se está reproduciendo
-          if (currentVideo.paused) {
-            // Si aún está pausado, intentar de nuevo
-            setTimeout(() => {
-              currentVideo.play().catch(() => {});
-            }, 100);
-          }
-        } catch (error) {
-          // Si falla, intentar cuando tenga más datos
-          const playOnReady = () => {
-            currentVideo.play().catch(() => {});
-          };
+        // Esperar a que tenga datos antes de reproducir
+        const playWhenReady = () => {
+          currentVideo.muted = true;
+          currentVideo.playsInline = true;
+          const playAttempts = [
+            () => currentVideo.play(),
+            () => new Promise(resolve => setTimeout(() => currentVideo.play().then(resolve).catch(resolve), 50)),
+            () => new Promise(resolve => setTimeout(() => currentVideo.play().then(resolve).catch(resolve), 100)),
+          ];
           
-          currentVideo.addEventListener('canplay', playOnReady, { once: true });
-          currentVideo.addEventListener('canplaythrough', playOnReady, { once: true });
-          
-          // Si el video no tiene datos, forzar carga
-          if (currentVideo.readyState < 2) {
-            currentVideo.load();
-          }
-        }
-      };
+          playAttempts[0]().catch(() => {
+            playAttempts[1]().catch(() => {
+              playAttempts[2]().catch(() => {});
+            });
+          });
+        };
+        
+        currentVideo.addEventListener('loadeddata', playWhenReady, { once: true });
+        currentVideo.addEventListener('canplay', playWhenReady, { once: true });
+        currentVideo.addEventListener('canplaythrough', playWhenReady, { once: true });
+        
+        return;
+      }
       
-      // Intentar reproducir inmediatamente
-      tryPlay();
+      // Si tiene datos, intentar reproducir inmediatamente con múltiples intentos
+      const playAttempts = [
+        () => currentVideo.play(),
+        () => new Promise(resolve => setTimeout(() => currentVideo.play().then(resolve).catch(resolve), 50)),
+        () => new Promise(resolve => setTimeout(() => currentVideo.play().then(resolve).catch(resolve), 100)),
+        () => new Promise(resolve => setTimeout(() => currentVideo.play().then(resolve).catch(resolve), 200)),
+      ];
       
-      // También intentar después de un pequeño delay para asegurar que el DOM está actualizado
-      setTimeout(() => {
+      try {
+        await playAttempts[0]();
         if (currentVideo.paused) {
-          tryPlay();
+          await playAttempts[1]();
         }
-      }, 50);
-    }
+        if (currentVideo.paused) {
+          await playAttempts[2]();
+        }
+        if (currentVideo.paused) {
+          await playAttempts[3]();
+        }
+      } catch (error) {
+        // Si todos fallan, intentar cuando tenga más datos
+        const playOnReady = () => {
+          currentVideo.muted = true;
+          currentVideo.playsInline = true;
+          currentVideo.play().catch(() => {});
+        };
+        
+        currentVideo.addEventListener('canplay', playOnReady, { once: true });
+        currentVideo.addEventListener('canplaythrough', playOnReady, { once: true });
+      }
+    };
+    
+    // Resetear el tiempo del video
+    currentVideo.currentTime = 0;
+    
+    // Intentar reproducir inmediatamente
+    forcePlay();
+    
+    // Intentar múltiples veces con delays para asegurar reproducción
+    setTimeout(() => {
+      if (currentVideo.paused) {
+        forcePlay();
+      }
+    }, 50);
+    
+    setTimeout(() => {
+      if (currentVideo.paused) {
+        forcePlay();
+      }
+    }, 150);
+    
+    setTimeout(() => {
+      if (currentVideo.paused) {
+        forcePlay();
+      }
+    }, 300);
   }, [currentVideoIndex, videos.length, userInteracted]);
 
   const handleNextVideo = useCallback(() => {
@@ -368,22 +431,26 @@ export default function Home() {
                   video.setAttribute('muted', '');
                   video.setAttribute('playsinline', '');
                   
-                  // Intentar reproducir múltiples veces
-                  const tryPlay = async () => {
-                    try {
-                      await video.play();
+                  // Intentar reproducir múltiples veces de forma agresiva
+                  const playAttempts = [
+                    () => video.play(),
+                    () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 50)),
+                    () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 100)),
+                  ];
+                  
+                  playAttempts[0]().then(() => {
+                    if (!video.paused) {
+                      setUserInteracted(true);
+                    }
+                  }).catch(() => {
+                    playAttempts[1]().then(() => {
                       if (!video.paused) {
                         setUserInteracted(true);
                       }
-                    } catch (error) {
-                      // Si falla, intentar de nuevo después de un delay
-                      setTimeout(() => {
-                        video.play().catch(() => {});
-                      }, 100);
-                    }
-                  };
-                  
-                  tryPlay();
+                    }).catch(() => {
+                      playAttempts[2]().catch(() => {});
+                    });
+                  });
                 }
               }
             }}
@@ -398,21 +465,37 @@ export default function Home() {
                   video.setAttribute('muted', '');
                   video.setAttribute('playsinline', '');
                   
-                  video.play().then(() => {
+                  const playAttempts = [
+                    () => video.play(),
+                    () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 50)),
+                    () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 100)),
+                  ];
+                  
+                  playAttempts[0]().then(() => {
                     if (!video.paused) {
                       setUserInteracted(true);
                     }
                   }).catch(() => {
-                    // Si falla, intentar de nuevo cuando pueda reproducirse
-                    video.addEventListener('canplay', () => {
-                      video.play().catch(() => {});
-                    }, { once: true });
+                    playAttempts[1]().catch(() => {
+                      playAttempts[2]().catch(() => {});
+                    });
                   });
                 }
               }
             }}
             onCanPlayThrough={() => {
               // Asegurar reproducción cuando el video puede reproducirse completamente
+              if (isActive && videoRefs.current[index]) {
+                const video = videoRefs.current[index];
+                if (video && video.paused) {
+                  video.muted = true;
+                  video.playsInline = true;
+                  video.play().catch(() => {});
+                }
+              }
+            }}
+            onLoadedMetadata={() => {
+              // Intentar reproducir cuando se cargan los metadatos
               if (isActive && videoRefs.current[index]) {
                 const video = videoRefs.current[index];
                 if (video && video.paused) {
