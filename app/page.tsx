@@ -495,19 +495,8 @@ export default function Home() {
               }
             }}
             onLoadedMetadata={() => {
-              // Intentar reproducir cuando se cargan los metadatos
-              if (isActive && videoRefs.current[index]) {
-                const video = videoRefs.current[index];
-                if (video && video.paused) {
-                  video.muted = true;
-                  video.playsInline = true;
-                  video.play().catch(() => {});
-                }
-              }
-            }}
-            onLoadedMetadata={() => {
               // Intentar reproducir cuando se cargan los metadatos (especialmente para iOS)
-              if (isActive && isFirstVideo && videoRefs.current[index]) {
+              if (isActive && videoRefs.current[index]) {
                 const video = videoRefs.current[index];
                 if (video) {
                   video.muted = true;
@@ -516,16 +505,25 @@ export default function Home() {
                   video.setAttribute('muted', '');
                   video.setAttribute('playsinline', '');
                   
-                  // Intentar reproducir inmediatamente
-                  video.play().then(() => {
+                  // Intentar reproducir inmediatamente con múltiples intentos
+                  const playAttempts = [
+                    () => video.play(),
+                    () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 50)),
+                    () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 100)),
+                  ];
+                  
+                  playAttempts[0]().then(() => {
                     if (!video.paused) {
                       setUserInteracted(true);
                     }
                   }).catch(() => {
-                    // Si falla, intentar de nuevo cuando tenga más datos
-                    setTimeout(() => {
-                      video.play().catch(() => {});
-                    }, 200);
+                    playAttempts[1]().then(() => {
+                      if (!video.paused) {
+                        setUserInteracted(true);
+                      }
+                    }).catch(() => {
+                      playAttempts[2]().catch(() => {});
+                    });
                   });
                 }
               }
