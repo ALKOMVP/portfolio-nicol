@@ -473,7 +473,7 @@ export default function Home() {
         
         return (
           <video
-            key={`video-${index}`}
+            key={`video-${index}-${isMobile ? 'mobile' : 'desktop'}-${videoSrc}`}
             ref={(el) => {
               videoRefs.current[index] = el;
             }}
@@ -481,7 +481,7 @@ export default function Home() {
             loop
             muted
             playsInline
-            preload={isMobile ? (isFirstVideo ? "auto" : "auto") : "auto"}
+            preload="auto"
             x5-video-player-type="h5"
             x5-video-player-fullscreen="true"
             x5-video-orientation="portraint"
@@ -491,7 +491,7 @@ export default function Home() {
               isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
             onError={(e) => {
-              console.error('Error cargando video:', videoSrc);
+              console.error('Error cargando video:', videoSrc, e);
             }}
             onCanPlay={() => {
               // Reproducir automáticamente cuando el video puede reproducirse
