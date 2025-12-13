@@ -10,11 +10,13 @@ interface VideoFile {
   source?: 'google-drive';
   downloadUrl?: string;
   directUrl?: string;
+  alternativeUrl?: string;
 }
 
 export default function VideosPage() {
   const [driveVideos, setDriveVideos] = useState<VideoFile[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(null);
 
   // Cargar videos de Google Drive al iniciar
   useEffect(() => {
