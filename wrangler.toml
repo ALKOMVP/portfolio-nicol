@@ -3,8 +3,7 @@ compatibility_date = "2024-01-01"
 pages_build_output_dir = ".next"
 
 # Cloudflare KV para almacenamiento persistente de archivos
-# Ejecuta: wrangler kv:namespace create "FILES" para crear el namespace
-# [[kv_namespaces]]
-# binding = "FILES"
-# id = "tu-kv-namespace-id"
+[[kv_namespaces]]
+binding = "FILES"
+id = "9cd34bc4412a430ab5500ce1e2b91621"
 
