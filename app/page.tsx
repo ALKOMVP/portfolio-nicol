@@ -492,7 +492,6 @@ export default function Home() {
             x5-video-orientation="portraint"
             webkit-playsinline="true"
             x-webkit-airplay="allow"
-            loading={isMobile && !isFirstVideo ? "lazy" : undefined}
             className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
               isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
