@@ -481,7 +481,7 @@ export default function Home() {
             loop
             muted
             playsInline
-            preload={isMobile ? (isFirstVideo ? "auto" : "metadata") : "auto"}
+            preload={isMobile ? (isFirstVideo ? "auto" : "auto") : "auto"}
             x5-video-player-type="h5"
             x5-video-player-fullscreen="true"
             x5-video-orientation="portraint"
@@ -533,59 +533,20 @@ export default function Home() {
                 const video = videoRefs.current[index];
                 if (!video) return;
                 
-                // En mobile, verificar y actualizar la fuente si es necesario
-                if (isMobile) {
-                  const expectedSrc = videos[index];
-                  const source = video.querySelector('source');
-                  if (source) {
-                    const currentSrc = source.getAttribute('src');
-                    if (currentSrc !== expectedSrc) {
-                      source.setAttribute('src', expectedSrc);
-                      video.load();
-                      return;
-                    }
-                  }
-                }
-                
-                if (video.paused) {
+                // En mobile, reproducir inmediatamente cuando tiene datos
+                if (isMobile && video.paused) {
                   video.muted = true;
                   video.playsInline = true;
-                  video.setAttribute('autoplay', '');
-                  video.setAttribute('muted', '');
-                  video.setAttribute('playsinline', '');
-                  
-                  const playAttempts = [
-                    () => video.play(),
-                    () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 50)),
-                    () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 100)),
-                    () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 200)),
-                    () => new Promise(resolve => setTimeout(() => video.play().then(resolve).catch(resolve), 300)),
-                  ];
-                  
-                  playAttempts[0]().then(() => {
+                  video.play().then(() => {
                     if (!video.paused) {
                       setUserInteracted(true);
                     }
                   }).catch(() => {
-                    playAttempts[1]().then(() => {
-                      if (!video.paused) {
-                        setUserInteracted(true);
-                      }
-                    }).catch(() => {
-                      playAttempts[2]().then(() => {
-                        if (!video.paused) {
-                          setUserInteracted(true);
-                        }
-                      }).catch(() => {
-                        playAttempts[3]().then(() => {
-                          if (!video.paused) {
-                            setUserInteracted(true);
-                          }
-                        }).catch(() => {
-                          playAttempts[4]().catch(() => {});
-                        });
-                      });
-                    });
+                    setTimeout(() => {
+                      video.muted = true;
+                      video.playsInline = true;
+                      video.play().catch(() => {});
+                    }, 100);
                   });
                 }
               }
