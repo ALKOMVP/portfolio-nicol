@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 export default function Home() {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [videosLoaded, setVideosLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
   const videos = [
@@ -12,9 +13,71 @@ export default function Home() {
     '/videos/cabaret-video.mp4',
   ];
 
+  // Precargar todos los videos al inicio
+  useEffect(() => {
+    const loadPromises = videos.map((src, index) => {
+      return new Promise<void>((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'auto';
+        video.src = src;
+        video.muted = true;
+        video.playsInline = true;
+        
+        video.addEventListener('loadeddata', () => {
+          resolve();
+        });
+        
+        video.addEventListener('error', () => {
+          console.warn(`Error precargando video ${index}:`, src);
+          resolve(); // Continuar aunque haya error
+        });
+        
+        // Forzar carga
+        video.load();
+      });
+    });
+
+    Promise.all(loadPromises).then(() => {
+      setVideosLoaded(true);
+    });
+  }, [videos]);
+
+  // Inicializar y reproducir el video actual cuando se cargan todos
+  useEffect(() => {
+    if (videosLoaded) {
+      const validIndex = currentVideoIndex % videos.length;
+      const currentVideo = videoRefs.current[validIndex];
+      
+      if (currentVideo) {
+        // Pausar todos los videos primero
+        videoRefs.current.forEach((video, index) => {
+          if (video && index !== validIndex) {
+            video.pause();
+            video.currentTime = 0;
+          }
+        });
+        
+        // Reproducir el video actual
+        if (currentVideo.readyState >= 2) {
+          // Video ya está cargado
+          currentVideo.currentTime = 0;
+          currentVideo.play().catch(() => {});
+        } else {
+          // Esperar a que el video se cargue
+          const handleCanPlay = () => {
+            currentVideo.currentTime = 0;
+            currentVideo.play().catch(() => {});
+            currentVideo.removeEventListener('canplay', handleCanPlay);
+          };
+          currentVideo.addEventListener('canplay', handleCanPlay);
+          currentVideo.load();
+        }
+      }
+    }
+  }, [currentVideoIndex, videosLoaded, videos.length]);
+
   const handleNextVideo = useCallback(() => {
     setCurrentVideoIndex((prevIndex) => {
-      // Asegurar que siempre tenemos un índice válido
       const currentValidIndex = prevIndex % videos.length;
       const nextIndex = (currentValidIndex + 1) % videos.length;
       return nextIndex;
@@ -23,43 +86,11 @@ export default function Home() {
 
   const handlePreviousVideo = useCallback(() => {
     setCurrentVideoIndex((prevIndex) => {
-      // Asegurar que siempre tenemos un índice válido
       const currentValidIndex = prevIndex % videos.length;
       const prevVideoIndex = currentValidIndex === 0 ? videos.length - 1 : currentValidIndex - 1;
       return prevVideoIndex;
     });
   }, [videos.length]);
-
-  useEffect(() => {
-    if (videoRef.current && videos.length > 0) {
-      // Asegurar que el índice es válido
-      const validIndex = currentVideoIndex % videos.length;
-      const videoSrc = videos[validIndex];
-      const currentSrc = videoRef.current.getAttribute('src') || videoRef.current.src;
-      const expectedSrc = videoSrc.startsWith('http') ? videoSrc : videoSrc;
-      
-      // Cargar y reproducir el video (siempre actualizar para asegurar que funciona)
-      videoRef.current.src = videoSrc;
-      videoRef.current.load();
-      
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            // Video reproducido correctamente
-          })
-          .catch((error) => {
-            console.log('Error al reproducir video:', error);
-            // Intentar reproducir nuevamente después de un breve delay
-            setTimeout(() => {
-              if (videoRef.current) {
-                videoRef.current.play().catch(() => {});
-              }
-            }, 200);
-          });
-      }
-    }
-  }, [currentVideoIndex, videos]);
 
   // Prevenir scroll del body cuando está en la página de inicio
   useEffect(() => {
@@ -158,31 +189,34 @@ export default function Home() {
       className="relative h-screen w-full overflow-hidden fixed inset-0"
       onWheel={(e) => e.preventDefault()}
     >
-      {/* Video de fondo */}
-      {videos.length > 0 && (() => {
+      {/* Videos pre-cargados - todos renderizados pero solo uno visible */}
+      {videos.map((videoSrc, index) => {
         const validIndex = currentVideoIndex % videos.length;
-        const videoSrc = videos[validIndex];
+        const isActive = index === validIndex;
+        
         return (
           <video
-            key={`video-${validIndex}`}
-            ref={videoRef}
-            autoPlay
+            key={`video-${index}`}
+            ref={(el) => {
+              videoRefs.current[index] = el;
+            }}
             loop
             muted
             playsInline
-            className="absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000"
+            preload="auto"
+            className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
+              isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+            }`}
             onError={(e) => {
               console.error('Error cargando video:', videoSrc);
-              // Intentar recargar el video
-              if (videoRef.current) {
-                videoRef.current.load();
-                videoRef.current.play().catch(() => {});
-              }
             }}
             onLoadedData={() => {
-              // Asegurar que el video se reproduce cuando se carga
-              if (videoRef.current && videoRef.current.paused) {
-                videoRef.current.play().catch(() => {});
+              // Cuando el video se carga, si es el activo, reproducirlo
+              if (isActive && videoRefs.current[index]) {
+                const video = videoRefs.current[index];
+                if (video && video.paused) {
+                  video.play().catch(() => {});
+                }
               }
             }}
           >
@@ -190,7 +224,14 @@ export default function Home() {
             Tu navegador no soporta videos HTML5.
           </video>
         );
-      })()}
+      })}
+      
+      {/* Indicador de carga */}
+      {!videosLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/50">
+          <div className="text-white text-lg">Cargando videos...</div>
+        </div>
+      )}
 
       {/* Indicador de video actual */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
