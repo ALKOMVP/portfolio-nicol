@@ -8,12 +8,26 @@ export default function Home() {
   const [videosLoaded, setVideosLoaded] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
   
   const videos = [
     '/videos/background-video-1.mp4',
     '/videos/background-video-2.mp4',
     '/videos/background-video-3.mp4',
   ];
+
+  // Detectar si es mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             (window.innerWidth <= 768);
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Técnica agresiva: Crear un video oculto para desbloquear autoplay
   useEffect(() => {
@@ -115,16 +129,20 @@ export default function Home() {
   useEffect(() => {
     setVideosLoaded(true);
     
-    // Precargar los demás videos en segundo plano (sin bloquear)
-    videos.slice(1).forEach((src) => {
-      const video = document.createElement('video');
-      video.preload = 'metadata';
-      video.src = src;
-      video.muted = true;
-      video.playsInline = true;
-      video.load();
-    });
-  }, [videos]);
+    // En mobile, NO precargar los demás videos para optimizar la carga inicial
+    // Solo se cargarán cuando el usuario scrollee hacia ellos
+    if (!isMobile) {
+      // En desktop, precargar los demás videos en segundo plano
+      videos.slice(1).forEach((src) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.src = src;
+        video.muted = true;
+        video.playsInline = true;
+        video.load();
+      });
+    }
+  }, [videos, isMobile]);
 
   // Cambiar video cuando cambia el índice
   useEffect(() => {
@@ -141,6 +159,11 @@ export default function Home() {
         video.currentTime = 0;
       }
     });
+    
+    // En mobile, cargar el video solo cuando se necesita (lazy loading)
+    if (isMobile && currentVideo.readyState === 0) {
+      currentVideo.load();
+    }
     
     // Asegurar todos los atributos necesarios para móviles
     currentVideo.muted = true;
@@ -242,7 +265,7 @@ export default function Home() {
         forcePlay();
       }
     }, 300);
-  }, [currentVideoIndex, videos.length, userInteracted]);
+  }, [currentVideoIndex, videos.length, userInteracted, isMobile]);
 
   const handleNextVideo = useCallback(() => {
     setCurrentVideoIndex((prevIndex) => {
@@ -415,7 +438,7 @@ export default function Home() {
             loop
             muted
             playsInline
-            preload="auto"
+            preload={isMobile ? (isFirstVideo ? "auto" : "none") : "auto"}
             x5-video-player-type="h5"
             x5-video-player-fullscreen="true"
             x5-video-orientation="portraint"
