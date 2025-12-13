@@ -1,9 +1,4 @@
 name = "portfolio-nicol"
 compatibility_date = "2024-01-01"
-pages_build_output_dir = ".next"
-
-# Cloudflare KV para almacenamiento persistente de archivos
-[[kv_namespaces]]
-binding = "FILES"
-id = "9cd34bc4412a430ab5500ce1e2b91621"
+pages_build_output_dir = "out"
 

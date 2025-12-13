@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { uploadFile, getAllFiles, deleteFile } from '@/lib/api-storage';
+import { saveFile, loadAllFilesWithUrls, deleteFile } from '@/lib/storage';
 
 interface VideoFile {
   id: string;
@@ -15,44 +15,19 @@ export default function VideosPage() {
   const [isInitializing, setIsInitializing] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Cargar videos compartidos al iniciar
+  // Cargar videos guardados al iniciar
   useEffect(() => {
-    const loadSharedVideos = async () => {
+    const loadSavedVideos = async () => {
       try {
-        // Intentar cargar desde el servidor (compartido)
-        const sharedVideos = await getAllFiles('video');
-        setVideos(sharedVideos);
-        
-        // Guardar en localStorage como cache
-        localStorage.setItem('portfolio-videos', JSON.stringify(sharedVideos));
+        const savedVideos = await loadAllFilesWithUrls('video');
+        setVideos(savedVideos);
       } catch (error) {
-        console.error('Error cargando videos compartidos:', error);
-        // Fallback: cargar desde localStorage si hay error
-        try {
-          const cached = localStorage.getItem('portfolio-videos');
-          if (cached) {
-            setVideos(JSON.parse(cached));
-          }
-        } catch (e) {
-          console.error('Error cargando desde cache:', e);
-        }
+        console.error('Error cargando videos guardados:', error);
       } finally {
         setIsInitializing(false);
       }
     };
-    loadSharedVideos();
-    
-    // Recargar periódicamente para obtener nuevos archivos
-    const interval = setInterval(() => {
-      getAllFiles('video')
-        .then((videos) => {
-          setVideos(videos);
-          localStorage.setItem('portfolio-videos', JSON.stringify(videos));
-        })
-        .catch(() => {});
-    }, 30000); // Cada 30 segundos
-    
-    return () => clearInterval(interval);
+    loadSavedVideos();
   }, []);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,20 +41,21 @@ export default function VideosPage() {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (file.type.startsWith('video/')) {
-          // Subir al servidor (compartido)
-          const uploadedFile = await uploadFile(file, 'video');
+          // Guardar en IndexedDB
+          const id = await saveFile(file, 'video');
+          // Crear URL para mostrar
+          const url = URL.createObjectURL(file);
           newVideos.push({
-            id: uploadedFile.id,
-            name: uploadedFile.name,
-            url: uploadedFile.url,
+            id,
+            name: file.name,
+            url,
           });
         }
       }
 
       setVideos((prev) => [...prev, ...newVideos]);
     } catch (error) {
-      console.error('Error subiendo videos:', error);
-      alert('Error al subir videos. Por favor, intenta nuevamente.');
+      console.error('Error guardando videos:', error);
     } finally {
       setIsLoading(false);
       if (fileInputRef.current) {
@@ -90,13 +66,18 @@ export default function VideosPage() {
 
   const removeVideo = async (id: string) => {
     try {
-      // Eliminar del servidor (compartido)
+      // Eliminar de IndexedDB
       await deleteFile(id, 'video');
-      // Eliminar del estado
-      setVideos((prev) => prev.filter((v) => v.id !== id));
+      // Eliminar del estado y revocar URL
+      setVideos((prev) => {
+        const video = prev.find((v) => v.id === id);
+        if (video) {
+          URL.revokeObjectURL(video.url);
+        }
+        return prev.filter((v) => v.id !== id);
+      });
     } catch (error) {
       console.error('Error eliminando video:', error);
-      alert('Error al eliminar video. Por favor, intenta nuevamente.');
     }
   };
 
