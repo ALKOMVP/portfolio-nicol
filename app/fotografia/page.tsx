@@ -100,28 +100,32 @@ export default function FotografiaPage() {
             {drivePhotos.map((photo) => (
               <div
                 key={photo.id}
-                className="relative group glass rounded-lg overflow-hidden hover-glow cursor-pointer bg-black"
+                className="relative group glass rounded-lg overflow-hidden hover-glow cursor-pointer bg-black flex flex-col"
                 onClick={() => setSelectedPhoto(photo)}
               >
-                <img
-                  src={photo.url}
-                  alt={photo.name}
-                  className="w-full h-64 object-contain transition-transform duration-300 group-hover:scale-105"
-                  loading="lazy"
-                  onError={(e) => {
-                    // Si falla el thumbnail, intentar con la URL de visualización
-                    if (photo.viewUrl && e.currentTarget.src !== photo.viewUrl) {
-                      e.currentTarget.src = photo.viewUrl;
-                    }
-                  }}
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                  <span className="opacity-0 group-hover:opacity-100 text-white font-medium">
-                    Ver más
-                  </span>
+                <div className="relative w-full h-64 bg-black flex items-center justify-center flex-shrink-0">
+                  <img
+                    src={photo.url}
+                    alt={photo.name}
+                    className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                    onError={(e) => {
+                      // Si falla el thumbnail, intentar con la URL de visualización
+                      if (photo.viewUrl && e.currentTarget.src !== photo.viewUrl) {
+                        e.currentTarget.src = photo.viewUrl;
+                      }
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                    <span className="opacity-0 group-hover:opacity-100 text-white font-medium">
+                      Ver más
+                    </span>
+                  </div>
                 </div>
-                <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                  Google Drive
+                <div className="p-3 flex-1 flex flex-col justify-center">
+                  <h3 className="font-medium text-white text-xs md:text-sm line-clamp-2 text-center" title={removeFileExtension(photo.name)}>
+                    {removeFileExtension(photo.name)}
+                  </h3>
                 </div>
               </div>
             ))}
@@ -150,7 +154,7 @@ export default function FotografiaPage() {
               }}
             />
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between bg-black/70 px-4 py-2 rounded-lg">
-              <p className="text-white font-medium truncate mr-4">{selectedPhoto.name}</p>
+              <p className="text-white font-medium truncate mr-4">{removeFileExtension(selectedPhoto.name)}</p>
               {selectedPhoto.downloadUrl && (
                 <a
                   href={selectedPhoto.downloadUrl}
