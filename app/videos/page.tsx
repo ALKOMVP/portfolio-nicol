@@ -139,18 +139,44 @@ export default function VideosPage() {
                 <div className="relative w-full h-full flex items-center justify-center">
                   <div className="w-full h-full max-w-[95vw] max-h-[95vh] bg-black">
                     <iframe
-                      src={`${selectedVideo.url}${selectedVideo.url.includes('?') ? '&' : '?'}autoplay=1`}
+                      src={selectedVideo.url}
                       className="w-full h-full border-0"
                       allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                       allowFullScreen
                       title={selectedVideo.name}
+                      onLoad={(e) => {
+                        // Intentar hacer clic automáticamente en el botón de play del iframe
+                        // Nota: Esto puede estar bloqueado por políticas de seguridad del navegador
+                        try {
+                          const iframe = e.currentTarget;
+                          if (iframe.contentWindow) {
+                            // Intentar encontrar y hacer clic en el botón de play
+                            setTimeout(() => {
+                              try {
+                                const playButton = iframe.contentDocument?.querySelector('button[aria-label*="Play"], button[aria-label*="Reproducir"], .play-button, [data-id="play"]');
+                                if (playButton) {
+                                  (playButton as HTMLElement).click();
+                                }
+                              } catch (error) {
+                                // Si falla por políticas de seguridad, el usuario tendrá que hacer clic manualmente
+                                console.log('No se puede acceder al contenido del iframe por políticas de seguridad');
+                              }
+                            }, 500);
+                          }
+                        } catch (error) {
+                          // Ignorar errores de políticas de seguridad
+                        }
+                      }}
                     />
                   </div>
                   <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between bg-black/70 px-4 py-2 rounded-lg">
                     <p className="text-white font-medium truncate mr-4">{selectedVideo.name}</p>
                   </div>
                   <button
-                    onClick={() => setSelectedVideo(null)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedVideo(null);
+                    }}
                     className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white rounded-full p-3 z-10"
                   >
                     <svg
