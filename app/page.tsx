@@ -14,37 +14,71 @@ export default function Home() {
     '/videos/cabaret-video.mp4',
   ];
 
-  // Capturar primera interacción del usuario para desbloquear autoplay en iOS
+  // Intentar reproducir automáticamente sin interacción del usuario
   useEffect(() => {
-    const handleFirstInteraction = async () => {
-      if (!userInteracted) {
-        setUserInteracted(true);
+    // Técnica 1: Intentar reproducir inmediatamente cuando el componente se monta
+    const tryAutoPlay = async () => {
+      const firstVideo = videoRefs.current[0];
+      if (firstVideo) {
+        // Asegurar todos los atributos necesarios para autoplay en iOS
+        firstVideo.muted = true;
+        firstVideo.playsInline = true;
+        firstVideo.setAttribute('autoplay', '');
+        firstVideo.setAttribute('muted', '');
+        firstVideo.setAttribute('playsinline', '');
         
-        // Intentar reproducir todos los videos después de la primera interacción
-        videoRefs.current.forEach((video) => {
-          if (video && video.paused) {
-            video.muted = true;
-            video.playsInline = true;
-            video.play().catch(() => {});
+        // Intentar reproducir múltiples veces con diferentes estrategias
+        const attempts = [
+          () => firstVideo.play(),
+          () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 100)),
+          () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 300)),
+          () => new Promise(resolve => setTimeout(() => firstVideo.play().then(resolve).catch(resolve), 500)),
+        ];
+        
+        for (const attempt of attempts) {
+          try {
+            await attempt();
+            if (!firstVideo.paused) {
+              setUserInteracted(true);
+              break;
+            }
+          } catch (error) {
+            // Continuar con el siguiente intento
           }
-        });
+        }
       }
     };
 
-    // Escuchar múltiples eventos de interacción
-    const events = ['touchstart', 'touchend', 'click', 'scroll'];
-    events.forEach((event) => {
-      document.addEventListener(event, handleFirstInteraction, { once: true, passive: true });
-      window.addEventListener(event, handleFirstInteraction, { once: true, passive: true });
-    });
+    // Intentar inmediatamente
+    tryAutoPlay();
+
+    // Intentar cuando el DOM esté completamente listo
+    if (document.readyState === 'complete') {
+      setTimeout(tryAutoPlay, 100);
+    } else {
+      window.addEventListener('load', tryAutoPlay, { once: true });
+    }
+
+    // Intentar cuando el video tenga datos cargados
+    const firstVideo = videoRefs.current[0];
+    if (firstVideo) {
+      const playWhenReady = () => {
+        if (firstVideo.readyState >= 2) { // HAVE_CURRENT_DATA
+          firstVideo.muted = true;
+          firstVideo.playsInline = true;
+          firstVideo.play().catch(() => {});
+        }
+      };
+      
+      firstVideo.addEventListener('loadeddata', playWhenReady, { once: true });
+      firstVideo.addEventListener('canplay', playWhenReady, { once: true });
+      firstVideo.addEventListener('canplaythrough', playWhenReady, { once: true });
+    }
 
     return () => {
-      events.forEach((event) => {
-        document.removeEventListener(event, handleFirstInteraction);
-        window.removeEventListener(event, handleFirstInteraction);
-      });
+      window.removeEventListener('load', tryAutoPlay);
     };
-  }, [userInteracted]);
+  }, []);
 
   // Habilitar scroll inmediatamente y precargar videos
   useEffect(() => {
@@ -267,6 +301,11 @@ export default function Home() {
             muted
             playsInline
             preload={isFirstVideo ? "auto" : "metadata"}
+            x5-video-player-type="h5"
+            x5-video-player-fullscreen="true"
+            x5-video-orientation="portraint"
+            webkit-playsinline="true"
+            x-webkit-airplay="allow"
             className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
               isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
@@ -280,19 +319,26 @@ export default function Home() {
                 if (video) {
                   video.muted = true;
                   video.playsInline = true;
-                  // Intentar reproducir (funcionará mejor después de interacción del usuario)
-                  video.play().catch(() => {
-                    // Si falla, esperar a que el usuario interactúe
-                    if (!userInteracted) {
-                      const playOnInteraction = () => {
+                  video.setAttribute('autoplay', '');
+                  video.setAttribute('muted', '');
+                  video.setAttribute('playsinline', '');
+                  
+                  // Intentar reproducir múltiples veces
+                  const tryPlay = async () => {
+                    try {
+                      await video.play();
+                      if (!video.paused) {
+                        setUserInteracted(true);
+                      }
+                    } catch (error) {
+                      // Si falla, intentar de nuevo después de un delay
+                      setTimeout(() => {
                         video.play().catch(() => {});
-                        document.removeEventListener('touchstart', playOnInteraction);
-                        document.removeEventListener('click', playOnInteraction);
-                      };
-                      document.addEventListener('touchstart', playOnInteraction, { once: true });
-                      document.addEventListener('click', playOnInteraction, { once: true });
+                      }, 100);
                     }
-                  });
+                  };
+                  
+                  tryPlay();
                 }
               }
             }}
@@ -303,7 +349,15 @@ export default function Home() {
                 if (video && video.paused) {
                   video.muted = true;
                   video.playsInline = true;
-                  video.play().catch(() => {});
+                  video.setAttribute('autoplay', '');
+                  video.setAttribute('muted', '');
+                  video.setAttribute('playsinline', '');
+                  
+                  video.play().then(() => {
+                    if (!video.paused) {
+                      setUserInteracted(true);
+                    }
+                  }).catch(() => {});
                 }
               }
             }}
@@ -311,13 +365,31 @@ export default function Home() {
               // Intentar reproducir cuando se cargan los metadatos (especialmente para iOS)
               if (isActive && isFirstVideo && videoRefs.current[index]) {
                 const video = videoRefs.current[index];
-                if (video && video.paused) {
+                if (video) {
                   video.muted = true;
                   video.playsInline = true;
-                  // En iOS, necesitamos esperar a que el usuario interactúe
-                  // Pero intentamos de todas formas
-                  video.play().catch(() => {});
+                  video.setAttribute('autoplay', '');
+                  video.setAttribute('muted', '');
+                  video.setAttribute('playsinline', '');
+                  
+                  // Intentar reproducir inmediatamente
+                  video.play().then(() => {
+                    if (!video.paused) {
+                      setUserInteracted(true);
+                    }
+                  }).catch(() => {
+                    // Si falla, intentar de nuevo cuando tenga más datos
+                    setTimeout(() => {
+                      video.play().catch(() => {});
+                    }, 200);
+                  });
                 }
+              }
+            }}
+            onPlay={() => {
+              // Marcar como interactuado cuando el video se reproduce
+              if (isActive && isFirstVideo) {
+                setUserInteracted(true);
               }
             }}
           >
@@ -327,7 +399,7 @@ export default function Home() {
         );
       })}
       
-      {/* Overlay invisible para capturar primera interacción en iOS */}
+      {/* Overlay invisible solo si el video no se está reproduciendo automáticamente */}
       {!userInteracted && (
         <div 
           className="absolute inset-0 z-40 cursor-pointer"
@@ -335,13 +407,12 @@ export default function Home() {
             e.preventDefault();
             setUserInteracted(true);
             const firstVideo = videoRefs.current[0];
-            if (firstVideo) {
+            if (firstVideo && firstVideo.paused) {
               firstVideo.muted = true;
               firstVideo.playsInline = true;
               try {
                 await firstVideo.play();
               } catch (error) {
-                // Si aún falla, intentar de nuevo
                 setTimeout(() => {
                   firstVideo.play().catch(() => {});
                 }, 100);
@@ -352,7 +423,7 @@ export default function Home() {
             e.preventDefault();
             setUserInteracted(true);
             const firstVideo = videoRefs.current[0];
-            if (firstVideo) {
+            if (firstVideo && firstVideo.paused) {
               firstVideo.muted = true;
               firstVideo.playsInline = true;
               try {
@@ -366,7 +437,8 @@ export default function Home() {
           }}
           style={{ 
             touchAction: 'none',
-            WebkitTapHighlightColor: 'transparent'
+            WebkitTapHighlightColor: 'transparent',
+            opacity: 0 // Completamente invisible pero funcional
           }}
         />
       )}
