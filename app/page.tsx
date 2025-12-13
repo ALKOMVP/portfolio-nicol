@@ -10,8 +10,8 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   
   const videos = [
-    '/videos/background-video.mp4',
-    '/videos/cabaret-video.mp4',
+    '/videos/background-video-2.mp4',
+    '/videos/background-video-3.mp4',
   ];
 
   // Técnica agresiva: Crear un video oculto para desbloquear autoplay
@@ -125,9 +125,10 @@ export default function Home() {
     });
   }, [videos]);
 
-  // Cambiar video cuando cambia el índice - VERSIÓN MEJORADA
+  // Cambiar video cuando cambia el índice
   useEffect(() => {
-    const validIndex = currentVideoIndex % videos.length;
+    // Calcular el índice válido usando módulo para ciclar correctamente
+    const validIndex = ((currentVideoIndex % videos.length) + videos.length) % videos.length;
     const currentVideo = videoRefs.current[validIndex];
     
     if (!currentVideo) return;
@@ -244,17 +245,19 @@ export default function Home() {
 
   const handleNextVideo = useCallback(() => {
     setCurrentVideoIndex((prevIndex) => {
-      const currentValidIndex = prevIndex % videos.length;
-      const nextIndex = (currentValidIndex + 1) % videos.length;
-      return nextIndex;
+      // Incrementar el índice normalmente, el módulo se aplica al calcular qué video mostrar
+      return prevIndex + 1;
     });
-  }, [videos.length]);
+  }, []);
 
   const handlePreviousVideo = useCallback(() => {
     setCurrentVideoIndex((prevIndex) => {
-      const currentValidIndex = prevIndex % videos.length;
-      const prevVideoIndex = currentValidIndex === 0 ? videos.length - 1 : currentValidIndex - 1;
-      return prevVideoIndex;
+      // Decrementar el índice normalmente, el módulo se aplica al calcular qué video mostrar
+      if (prevIndex <= 0) {
+        // Si está en 0 o menos, ir al último video
+        return videos.length - 1;
+      }
+      return prevIndex - 1;
     });
   }, [videos.length]);
 
@@ -396,7 +399,8 @@ export default function Home() {
     >
       {/* Videos pre-cargados - todos renderizados pero solo uno visible */}
       {videos.map((videoSrc, index) => {
-        const validIndex = currentVideoIndex % videos.length;
+        // Calcular el índice válido usando módulo para ciclar correctamente
+        const validIndex = ((currentVideoIndex % videos.length) + videos.length) % videos.length;
         const isActive = index === validIndex;
         const isFirstVideo = index === 0;
         
@@ -604,7 +608,7 @@ export default function Home() {
       {/* Indicador de video actual */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
         {videos.map((_, index) => {
-          const activeIndex = currentVideoIndex % videos.length;
+          const activeIndex = ((currentVideoIndex % videos.length) + videos.length) % videos.length;
           return (
             <div
               key={index}
