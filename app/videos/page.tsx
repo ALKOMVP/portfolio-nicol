@@ -31,6 +31,7 @@ export default function VideosPage() {
           source: 'google-drive' as const,
           downloadUrl: v.downloadUrl,
           directUrl: v.directUrl,
+          alternativeUrl: v.alternativeUrl,
         }));
         setDriveVideos(mappedVideos);
       } catch (error) {
@@ -54,6 +55,7 @@ export default function VideosPage() {
             source: 'google-drive' as const,
             downloadUrl: v.downloadUrl,
             directUrl: v.directUrl,
+            alternativeUrl: v.alternativeUrl,
           }));
           setDriveVideos(mappedVideos);
         })
