@@ -18,7 +18,7 @@ Para que la integración con Google Drive funcione, necesitas configurar estas v
 
    **Variable 1:**
    - **Variable name**: `GOOGLE_DRIVE_FOLDER_ID`
-   - **Value**: `18ef9eP5TwBPEiQxxF8yRtKsZJKj18ZtV`
+   - **Value**: `1U2SPoBhdyh80mQYwIyHixJ4FK-jcrOl6`
    - **Environment**: Production (y Preview si quieres)
 
    **Variable 2:**

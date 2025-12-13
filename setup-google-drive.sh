@@ -7,7 +7,7 @@ echo "🔧 Configurando variables de entorno para Google Drive en Cloudflare Pag
 echo ""
 
 # Variables
-FOLDER_ID="18ef9eP5TwBPEiQxxF8yRtKsZJKj18ZtV"
+FOLDER_ID="1U2SPoBhdyh80mQYwIyHixJ4FK-jcrOl6"
 API_KEY="AIzaSyD4zD2JMJVUMDNH_3ivWnwAnGhqOdyB5r0"
 PROJECT_NAME="portfolio-nicol"
 
