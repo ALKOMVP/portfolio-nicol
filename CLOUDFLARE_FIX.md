@@ -108,3 +108,4 @@ Después de configurar correctamente:
 - ✅ Build output: `.next`
 - ✅ Auto-deploy desde `main` branch activado
 
+

@@ -21,7 +21,8 @@ export async function onRequestGet(context: {
 
     // Construir URL de la API de Google Drive
     // q parameter busca archivos de imagen en la carpeta específica
-    const query = `'${folderId}' in parents and mimeType contains 'image' and trashed=false`;
+    // Incluye múltiples tipos MIME de imágenes para asegurar que se encuentren todas
+    const query = `'${folderId}' in parents and (mimeType contains 'image/' or mimeType='image/jpeg' or mimeType='image/png' or mimeType='image/gif' or mimeType='image/webp' or mimeType='image/bmp' or mimeType='image/tiff') and trashed=false`;
     const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,size,createdTime,modifiedTime,thumbnailLink)&orderBy=createdTime desc${apiKey ? `&key=${apiKey}` : ''}`;
 
     const response = await fetch(url);
@@ -46,6 +47,12 @@ export async function onRequestGet(context: {
 
     const data = await response.json();
     const files = data.files || [];
+
+    // Log para debugging con más detalles
+    console.log(`Found ${files.length} photos in folder ${folderId}`);
+    if (files.length > 0) {
+      console.log('Photo names:', files.map((f: any) => f.name).join(', '));
+    }
 
     // Convertir a formato compatible con el frontend
     const photos = files.map((file: any) => {
@@ -77,12 +84,25 @@ export async function onRequestGet(context: {
       };
     });
 
-    return new Response(JSON.stringify(photos), {
+    // Incluir información de debugging en la respuesta
+    const responseData = {
+      photos: photos,
+      debug: {
+        folderId: folderId,
+        totalFiles: files.length,
+        hasApiKey: !!apiKey,
+        fileNames: files.map((f: any) => f.name),
+      }
+    };
+
+    return new Response(JSON.stringify(responseData.photos), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=300', // Cache por 5 minutos
+        'Cache-Control': 'no-cache, no-store, must-revalidate', // Sin caché para ver cambios inmediatos
+        'Pragma': 'no-cache',
+        'Expires': '0',
       },
     });
   } catch (error) {

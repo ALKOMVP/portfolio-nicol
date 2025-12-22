@@ -74,3 +74,4 @@ Si quieres usar R2 ahora mismo:
 
 4. Actualiza `app/page.tsx` con las nuevas URLs
 
+

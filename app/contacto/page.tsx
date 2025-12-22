@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ContactoPage() {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -27,21 +29,16 @@ export default function ContactoPage() {
     setIsSubmitting(true);
     setSubmitStatus('idle');
 
-    // TODO: Configurar el endpoint de tu API aquí
-    // Ejemplo de implementación:
-    // 1. Crear un archivo app/api/contact/route.ts
-    // 2. Usar un servicio como SendGrid, Resend, o Nodemailer para enviar emails
-    // 3. El email llegará a: nicol@portfolio.com (configurar en el servicio de email)
     try {
-      // Simulación - Reemplazar con llamada real a API
-      // const response = await fetch('/api/contact', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
-      // if (!response.ok) throw new Error('Error al enviar');
+      // En producción, Cloudflare Pages usará automáticamente functions/api/contact.ts
+      // En desarrollo, usará app/api/contact/route.ts
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
       
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!response.ok) throw new Error('Error al enviar');
       
       setSubmitStatus('success');
       setFormData({
@@ -64,10 +61,10 @@ export default function ContactoPage() {
         {/* Header */}
         <div className="text-center mb-12 mt-8">
           <h1 className="text-5xl md:text-6xl font-bold mb-4 gradient-text">
-            Contacto
+            {t.contact.title}
           </h1>
           <p className="text-gray-400 text-lg">
-            ¿Tienes un proyecto en mente? ¡Hablemos!
+            {t.contact.subtitle}
           </p>
         </div>
 
@@ -76,7 +73,7 @@ export default function ContactoPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="nombre" className="block text-sm font-medium mb-2">
-                Nombre Completo *
+                {t.contact.name}
               </label>
               <input
                 type="text"
@@ -86,13 +83,13 @@ export default function ContactoPage() {
                 value={formData.nombre}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg focus:outline-none focus:border-white/30 transition-colors"
-                placeholder="Tu nombre"
+                placeholder={t.contact.name}
               />
             </div>
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-2">
-                Email *
+                {t.contact.email}
               </label>
               <input
                 type="email"
@@ -108,7 +105,7 @@ export default function ContactoPage() {
 
             <div>
               <label htmlFor="telefono" className="block text-sm font-medium mb-2">
-                Teléfono
+                {t.contact.phone}
               </label>
               <input
                 type="tel"
@@ -117,13 +114,13 @@ export default function ContactoPage() {
                 value={formData.telefono}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg focus:outline-none focus:border-white/30 transition-colors"
-                placeholder="+54 11 1234-5678"
+                placeholder="+55 21 99999-9999"
               />
             </div>
 
             <div>
               <label htmlFor="asunto" className="block text-sm font-medium mb-2">
-                Asunto *
+                {t.contact.subject}
               </label>
               <select
                 id="asunto"
@@ -133,18 +130,18 @@ export default function ContactoPage() {
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg focus:outline-none focus:border-white/30 transition-colors"
               >
-                <option value="">Selecciona un asunto</option>
-                <option value="show">Contratación para Show</option>
-                <option value="workshop">Workshop o Clase</option>
-                <option value="colaboracion">Colaboración</option>
-                <option value="prensa">Prensa y Medios</option>
-                <option value="otro">Otro</option>
+                <option value="">{t.contact.selectSubject}</option>
+                <option value="show">{t.contact.subjects.show}</option>
+                <option value="workshop">{t.contact.subjects.workshop}</option>
+                <option value="colaboracion">{t.contact.subjects.collaboration}</option>
+                <option value="prensa">{t.contact.subjects.press}</option>
+                <option value="otro">{t.contact.subjects.other}</option>
               </select>
             </div>
 
             <div>
               <label htmlFor="mensaje" className="block text-sm font-medium mb-2">
-                Mensaje *
+                {t.contact.message}
               </label>
               <textarea
                 id="mensaje"
@@ -154,19 +151,19 @@ export default function ContactoPage() {
                 value={formData.mensaje}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg focus:outline-none focus:border-white/30 transition-colors resize-none"
-                placeholder="Cuéntame sobre tu proyecto..."
+                placeholder={t.contact.message}
               />
             </div>
 
             {submitStatus === 'success' && (
               <div className="p-4 bg-green-500/20 border border-green-500/30 rounded-lg text-green-300">
-                ¡Mensaje enviado con éxito! Te contactaré pronto.
+                {t.contact.success}
               </div>
             )}
 
             {submitStatus === 'error' && (
               <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300">
-                Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.
+                {t.contact.error}
               </div>
             )}
 
@@ -175,36 +172,62 @@ export default function ContactoPage() {
               disabled={isSubmitting}
               className="w-full px-8 py-4 bg-white/10 hover:bg-white/20 rounded-lg hover-glow font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Enviando...' : 'Enviar Mensaje'}
+              {isSubmitting ? t.contact.sending : t.contact.send}
             </button>
           </form>
 
           {/* Información de contacto adicional */}
           <div className="mt-12 pt-8 border-t border-white/10">
-            <p className="text-gray-400 text-sm mb-4">
-              También puedes contactarme directamente:
+            <p className="text-gray-400 text-sm mb-4 font-medium">
+              {t.contact.professionalContact}
             </p>
-            <div className="space-y-2 text-gray-300">
-              <p>
+            <div className="space-y-3 text-gray-300 mb-6">
+              <p className="flex items-center gap-2">
+                <span>📧</span>
                 <span className="font-medium">Email:</span>{' '}
-                <a href="mailto:nicol@portfolio.com" className="hover:text-white transition-colors">
-                  nicol@portfolio.com
+                <a href="mailto:nicool.mena@gmail.com" className="hover:text-white transition-colors">
+                  nicool.mena@gmail.com
                 </a>
               </p>
-              <p>
-                <span className="font-medium">Teléfono:</span>{' '}
-                <a href="tel:+541112345678" className="hover:text-white transition-colors">
-                  +54 11 1234-5678
+              <p className="flex items-center gap-2">
+                <span>📱</span>
+                <span className="font-medium">Instagram:</span>{' '}
+                <a href="https://www.instagram.com/ni_colmena/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                  @ni_colmena
+                </a>
+              </p>
+              <p className="flex items-center gap-2">
+                <span>🌐</span>
+                <span className="font-medium">Sitio web:</span>{' '}
+                <a href="https://www.nicolmena.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                  www.nicolmena.com
+                </a>
+              </p>
+              <p className="flex items-center gap-2">
+                <span>💬</span>
+                <span className="font-medium">WhatsApp:</span>{' '}
+                <a href="https://wa.me/5521993965343" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                  +55 21 99396-5343
                 </a>
               </p>
             </div>
-            <p className="text-gray-500 text-xs mt-4">
-              * Actualiza estos datos de contacto con tu información real
-            </p>
+            
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <p className="text-gray-400 text-sm mb-3 font-medium">
+                {t.contact.availableFor}
+              </p>
+              <ul className="space-y-2 text-gray-300">
+                {t.contact.availableItems.map((item, index) => (
+                  <li key={index} className="flex items-start">
+                    <span className="text-pink-400 mr-3">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
-

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getGoogleDrivePhotos } from '@/lib/api-storage';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PhotoFile {
   id: string;
@@ -18,6 +19,7 @@ function removeFileExtension(filename: string): string {
 }
 
 export default function FotografiaPage() {
+  const { t } = useLanguage();
   const [drivePhotos, setDrivePhotos] = useState<PhotoFile[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoFile | null>(null);
@@ -28,7 +30,7 @@ export default function FotografiaPage() {
       try {
         // Cargar fotos de Google Drive
         const googlePhotos = await getGoogleDrivePhotos();
-        console.log('Fotos de Google Drive cargadas:', googlePhotos);
+        console.log(`✅ Fotos de Google Drive cargadas: ${googlePhotos.length} fotos`, googlePhotos);
         // Filtrar solo fotos de Google Drive y mapear al tipo correcto
         const mappedPhotos: PhotoFile[] = googlePhotos.map(p => ({
           id: p.id,
@@ -40,7 +42,7 @@ export default function FotografiaPage() {
         }));
         setDrivePhotos(mappedPhotos);
       } catch (error) {
-        console.error('Error cargando fotos de Google Drive:', error);
+        console.error('❌ Error cargando fotos de Google Drive:', error);
         setDrivePhotos([]);
       } finally {
         setIsInitializing(false);
@@ -48,11 +50,11 @@ export default function FotografiaPage() {
     };
     loadGoogleDrivePhotos();
     
-    // Recargar periódicamente para obtener nuevos archivos
+    // Recargar periódicamente para obtener nuevos archivos (cada 15 segundos)
     const interval = setInterval(() => {
       getGoogleDrivePhotos()
         .then((photos) => {
-          console.log('Fotos de Google Drive actualizadas:', photos);
+          console.log(`🔄 Fotos de Google Drive actualizadas: ${photos.length} fotos`, photos);
           const mappedPhotos: PhotoFile[] = photos.map(p => ({
             id: p.id,
             name: p.name,
@@ -64,9 +66,9 @@ export default function FotografiaPage() {
           setDrivePhotos(mappedPhotos);
         })
         .catch((error) => {
-          console.error('Error actualizando fotos de Google Drive:', error);
+          console.error('❌ Error actualizando fotos de Google Drive:', error);
         });
-    }, 30000); // Cada 30 segundos
+    }, 15000); // Cada 15 segundos para ver cambios más rápido
     
     return () => clearInterval(interval);
   }, []);
@@ -77,22 +79,22 @@ export default function FotografiaPage() {
         {/* Header */}
         <div className="text-center mb-12 mt-8">
           <h1 className="text-5xl md:text-6xl font-bold mb-4 gradient-text">
-            Fotografía
+            {t.photography.title}
           </h1>
           <p className="text-gray-400 text-lg">
-            Galería de fotografías de acrobacia y circo
+            {t.photography.subtitle}
           </p>
         </div>
 
         {isInitializing && (
-          <div className="text-center text-gray-400 mb-8">Cargando fotos...</div>
+          <div className="text-center text-gray-400 mb-8">{t.photography.loading}</div>
         )}
 
         {/* Grid de fotos */}
         {!isInitializing && drivePhotos.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-500 text-xl">
-              No hay fotografías disponibles aún.
+              {t.photography.noPhotos}
             </p>
           </div>
         ) : (
@@ -163,7 +165,7 @@ export default function FotografiaPage() {
                   className="text-blue-400 hover:text-blue-300 text-sm whitespace-nowrap"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Descargar
+                  {t.photography.download}
                 </a>
               )}
             </div>

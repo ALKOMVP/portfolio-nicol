@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getGoogleDriveVideos } from '@/lib/api-storage';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface VideoFile {
   id: string;
@@ -19,6 +20,7 @@ function removeFileExtension(filename: string): string {
 }
 
 export default function VideosPage() {
+  const { t } = useLanguage();
   const [driveVideos, setDriveVideos] = useState<VideoFile[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(null);
@@ -80,22 +82,22 @@ export default function VideosPage() {
         {/* Header */}
         <div className="text-center mb-12 mt-8">
           <h1 className="text-5xl md:text-6xl font-bold mb-4 gradient-text">
-            Videos
+            {t.videos.title}
           </h1>
           <p className="text-gray-400 text-lg">
-            Galería de videos de acrobacia y circo
+            {t.videos.subtitle}
           </p>
         </div>
 
         {isInitializing && (
-          <div className="text-center text-gray-400 mb-8">Cargando videos...</div>
+          <div className="text-center text-gray-400 mb-8">{t.videos.loading}</div>
         )}
 
         {/* Grid de videos */}
         {!isInitializing && driveVideos.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-500 text-xl">
-              No hay videos disponibles aún.
+              {t.videos.noVideos}
             </p>
           </div>
         ) : (

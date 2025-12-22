@@ -1,5 +1,7 @@
 'use client';
 
+import { useLanguage } from '@/contexts/LanguageContext';
+
 interface Event {
   id: string;
   title: string;
@@ -10,6 +12,8 @@ interface Event {
 }
 
 export default function ExperienciaPage() {
+  const { t } = useLanguage();
+  
   // Datos de ejemplo - estos pueden ser reemplazados con datos reales
   const events: Event[] = [
     {
@@ -62,18 +66,7 @@ export default function ExperienciaPage() {
   };
 
   const getTypeLabel = (type: Event['type']) => {
-    switch (type) {
-      case 'show':
-        return 'Show';
-      case 'competition':
-        return 'Competencia';
-      case 'workshop':
-        return 'Workshop';
-      case 'festival':
-        return 'Festival';
-      default:
-        return type;
-    }
+    return t.experience.types[type];
   };
 
   return (
@@ -82,10 +75,10 @@ export default function ExperienciaPage() {
         {/* Header */}
         <div className="text-center mb-12 mt-8">
           <h1 className="text-5xl md:text-6xl font-bold mb-4 gradient-text">
-            Experiencia
+            {t.experience.title}
           </h1>
           <p className="text-gray-400 text-lg">
-            Eventos, shows y experiencias profesionales
+            {t.experience.subtitle}
           </p>
         </div>
 
@@ -136,4 +129,3 @@ export default function ExperienciaPage() {
     </div>
   );
 }
-
