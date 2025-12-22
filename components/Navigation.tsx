@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -29,20 +28,18 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo y Nombre */}
-          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0">
-              <Image
+          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" style={{ backgroundColor: 'transparent' }}>
+            <div className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0" style={{ backgroundColor: 'transparent' }}>
+              <img
                 src="/logo.png"
                 alt="Nicol Mena Logo"
-                fill
-                className="object-contain"
-                priority
-                onError={(e) => {
-                  // Si el logo no existe, ocultar el contenedor
-                  const target = e.target as HTMLImageElement;
-                  if (target.parentElement) {
-                    target.parentElement.style.display = 'none';
-                  }
+                className="w-full h-full object-contain"
+                style={{ 
+                  backgroundColor: 'transparent',
+                  display: 'block',
+                  mixBlendMode: 'multiply',
+                  imageRendering: 'auto',
+                  filter: 'contrast(1.1) brightness(1.1)'
                 }}
               />
             </div>

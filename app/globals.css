@@ -123,4 +123,12 @@ a {
   animation: expand 0.5s ease-out;
 }
 
+/* Logo transparente - intentar eliminar fondo blanco */
+nav img[alt="Nicol Mena Logo"] {
+  background-color: transparent !important;
+  background: transparent !important;
+  /* Usar multiply para hacer el blanco más transparente sobre fondo oscuro */
+  mix-blend-mode: screen;
+}
+
 
