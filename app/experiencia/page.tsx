@@ -2,70 +2,43 @@
 
 import { useLanguage } from '@/contexts/LanguageContext';
 
+type EventType = 'festival' | 'theater' | 'cultural' | 'convention' | 'research' | 'residency';
+
 interface Event {
   id: string;
   title: string;
   date: string;
   location: string;
   description: string;
-  type: 'show' | 'competition' | 'workshop' | 'festival';
+  type: EventType;
 }
 
 export default function ExperienciaPage() {
   const { t } = useLanguage();
   
-  // Datos de ejemplo - estos pueden ser reemplazados con datos reales
-  const events: Event[] = [
-    {
-      id: '1',
-      title: 'Festival Internacional de Circo',
-      date: '2024',
-      location: 'Buenos Aires, Argentina',
-      description: 'Participación en el festival más importante de circo del país, presentando una rutina de acrobacia aérea.',
-      type: 'festival',
-    },
-    {
-      id: '2',
-      title: 'Show en Teatro Colón',
-      date: '2023',
-      location: 'Buenos Aires, Argentina',
-      description: 'Presentación especial de acrobacia en el histórico Teatro Colón.',
-      type: 'show',
-    },
-    {
-      id: '3',
-      title: 'Competencia Nacional de Acrobacia',
-      date: '2023',
-      location: 'Córdoba, Argentina',
-      description: 'Primer lugar en la categoría de acrobacia aérea con telas.',
-      type: 'competition',
-    },
-    {
-      id: '4',
-      title: 'Workshop de Acrobacia Contemporánea',
-      date: '2022',
-      location: 'Barcelona, España',
-      description: 'Taller intensivo de acrobacia contemporánea con maestros internacionales.',
-      type: 'workshop',
-    },
-  ];
+  // Usar los eventos de las traducciones con cast de tipo
+  const events: Event[] = t.experience.events as Event[];
 
-  const getTypeColor = (type: Event['type']) => {
+  const getTypeColor = (type: EventType) => {
     switch (type) {
-      case 'show':
-        return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
-      case 'competition':
-        return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
-      case 'workshop':
-        return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
       case 'festival':
         return 'bg-pink-500/20 text-pink-300 border-pink-500/30';
+      case 'theater':
+        return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+      case 'cultural':
+        return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+      case 'convention':
+        return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
+      case 'research':
+        return 'bg-green-500/20 text-green-300 border-green-500/30';
+      case 'residency':
+        return 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
       default:
         return 'bg-gray-500/20 text-gray-300 border-gray-500/30';
     }
   };
 
-  const getTypeLabel = (type: Event['type']) => {
+  const getTypeLabel = (type: EventType) => {
     return t.experience.types[type];
   };
 
@@ -106,7 +79,7 @@ export default function ExperienciaPage() {
                   }`}
                 >
                   <div className="glass rounded-lg p-6 hover-glow">
-                    <div className="flex items-center gap-3 mb-3">
+                    <div className="flex items-center gap-3 mb-3 flex-wrap">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium border ${getTypeColor(
                           event.type

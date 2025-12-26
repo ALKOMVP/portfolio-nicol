@@ -113,3 +113,4 @@ Ver `CONFIGURACION_EMAIL.md` para más detalles.
 - Los iconos flotantes están presentes en todas las páginas
 - El formulario de contacto funciona en desarrollo (solo muestra en consola) y producción (envía email)
 
+

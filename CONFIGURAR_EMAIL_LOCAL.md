@@ -58,3 +58,4 @@ npm run dev
 3. Revisa la consola del servidor para ver errores
 4. Verifica que la API Key sea válida en https://resend.com/api-keys
 
+

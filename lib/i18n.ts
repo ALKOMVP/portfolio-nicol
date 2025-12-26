@@ -69,11 +69,21 @@ export interface Translations {
     title: string;
     subtitle: string;
     types: {
-      show: string;
-      competition: string;
-      workshop: string;
       festival: string;
+      theater: string;
+      cultural: string;
+      convention: string;
+      research: string;
+      residency: string;
     };
+    events: Array<{
+      id: string;
+      title: string;
+      date: string;
+      location: string;
+      description: string;
+      type: string;
+    }>;
   };
 }
 
@@ -151,11 +161,87 @@ const translations: Record<Language, Translations> = {
       title: 'Experiencia',
       subtitle: 'Eventos, shows y experiencias profesionales',
       types: {
-        show: 'Show',
-        competition: 'Competencia',
-        workshop: 'Workshop',
         festival: 'Festival',
+        theater: 'Teatro',
+        cultural: 'Espacio Cultural',
+        convention: 'Convención',
+        research: 'Investigación',
+        residency: 'Residencia',
       },
+      events: [
+        {
+          id: '1',
+          title: 'PORTALES – Pflasterspektakel',
+          date: '2025',
+          location: 'Linz, Austria',
+          description: 'Presentación del solo Portales en festival europeo de gran formato.',
+          type: 'festival',
+        },
+        {
+          id: '2',
+          title: 'PORTALES – Theater Spektakel',
+          date: '2025',
+          location: 'Zúrich, Suiza',
+          description: 'Participación con Portales en reconocido festival europeo.',
+          type: 'theater',
+        },
+        {
+          id: '3',
+          title: 'PORTALES – Berlin lacht!',
+          date: '2025',
+          location: 'Berlín, Alemania',
+          description: 'Función de Portales en espacio público.',
+          type: 'festival',
+        },
+        {
+          id: '4',
+          title: 'PORTALES – PRT Bochum',
+          date: '2025',
+          location: 'Bochum, Alemania',
+          description: 'Presentación de Portales en programación europea.',
+          type: 'cultural',
+        },
+        {
+          id: '5',
+          title: 'PORTALES – Festival Internacional de Rua de Bahia',
+          date: '2025',
+          location: 'Salvador de Bahía, Brasil',
+          description: 'Función de Portales en festival de referencia en Brasil.',
+          type: 'festival',
+        },
+        {
+          id: '6',
+          title: 'PORTALES – Centro Coreográfico do Rio de Janeiro',
+          date: '2024',
+          location: 'Río de Janeiro, Brasil',
+          description: 'Función de Portales en espacio dedicado a la investigación del movimiento.',
+          type: 'cultural',
+        },
+        {
+          id: '7',
+          title: 'PORTALES – Convención Nacional de Circo',
+          date: '2024',
+          location: 'Santiago, Chile',
+          description: 'Presentación de Portales en encuentro profesional del circo chileno.',
+          type: 'convention',
+        },
+        {
+          id: '8',
+          title: 'Investigación y creación – PORTALES',
+          date: '2023',
+          location: 'Escuela Nacional de Circo Luiz Olimecha, Río de Janeiro, Brasil',
+          description: 'Presentación del proceso creativo del solo.',
+          type: 'research',
+        },
+        {
+          id: '9',
+          title: 'Residencia CADE – Creación Escénica Circense',
+          date: '2025',
+          location: 'Florianópolis, Brasil',
+          description: 'Residencia de investigación en circo contemporáneo y creación escénica.',
+          type: 'residency',
+        },
+      ],
     },
   },
   en: {
@@ -231,11 +317,87 @@ const translations: Record<Language, Translations> = {
       title: 'Experience',
       subtitle: 'Events, shows and professional experiences',
       types: {
-        show: 'Show',
-        competition: 'Competition',
-        workshop: 'Workshop',
         festival: 'Festival',
+        theater: 'Theater',
+        cultural: 'Cultural Space',
+        convention: 'Convention',
+        research: 'Research',
+        residency: 'Residency',
       },
+      events: [
+        {
+          id: '1',
+          title: 'PORTALES – Pflasterspektakel',
+          date: '2025',
+          location: 'Linz, Austria',
+          description: 'Presentation of the solo Portales at a major European festival.',
+          type: 'festival',
+        },
+        {
+          id: '2',
+          title: 'PORTALES – Theater Spektakel',
+          date: '2025',
+          location: 'Zurich, Switzerland',
+          description: 'Participation with Portales at a recognized European festival.',
+          type: 'theater',
+        },
+        {
+          id: '3',
+          title: 'PORTALES – Berlin lacht!',
+          date: '2025',
+          location: 'Berlin, Germany',
+          description: 'Performance of Portales in public space.',
+          type: 'festival',
+        },
+        {
+          id: '4',
+          title: 'PORTALES – PRT Bochum',
+          date: '2025',
+          location: 'Bochum, Germany',
+          description: 'Presentation of Portales in European programming.',
+          type: 'cultural',
+        },
+        {
+          id: '5',
+          title: 'PORTALES – International Street Arts Festival of Bahia',
+          date: '2025',
+          location: 'Salvador de Bahia, Brazil',
+          description: 'Performance of Portales at a reference festival in Brazil.',
+          type: 'festival',
+        },
+        {
+          id: '6',
+          title: 'PORTALES – Centro Coreográfico do Rio de Janeiro',
+          date: '2024',
+          location: 'Rio de Janeiro, Brazil',
+          description: 'Performance of Portales at a space dedicated to movement research.',
+          type: 'cultural',
+        },
+        {
+          id: '7',
+          title: 'PORTALES – National Circus Convention',
+          date: '2024',
+          location: 'Santiago, Chile',
+          description: 'Presentation of Portales at a professional meeting of Chilean circus.',
+          type: 'convention',
+        },
+        {
+          id: '8',
+          title: 'Research and Creation – PORTALES',
+          date: '2023',
+          location: 'Escola Nacional de Circo Luiz Olimecha, Rio de Janeiro, Brazil',
+          description: 'Presentation of the creative process of the solo.',
+          type: 'research',
+        },
+        {
+          id: '9',
+          title: 'CADE Residency – Scenic Circus Creation',
+          date: '2025',
+          location: 'Florianópolis, Brazil',
+          description: 'Research residency in contemporary circus and scenic creation.',
+          type: 'residency',
+        },
+      ],
     },
   },
   pt: {
@@ -311,11 +473,87 @@ const translations: Record<Language, Translations> = {
       title: 'Experiência',
       subtitle: 'Eventos, shows e experiências profissionais',
       types: {
-        show: 'Show',
-        competition: 'Competição',
-        workshop: 'Workshop',
         festival: 'Festival',
+        theater: 'Teatro',
+        cultural: 'Espaço Cultural',
+        convention: 'Convenção',
+        research: 'Pesquisa',
+        residency: 'Residência',
       },
+      events: [
+        {
+          id: '1',
+          title: 'PORTALES – Pflasterspektakel',
+          date: '2025',
+          location: 'Linz, Áustria',
+          description: 'Apresentação do solo Portales em festival europeu de grande formato.',
+          type: 'festival',
+        },
+        {
+          id: '2',
+          title: 'PORTALES – Theater Spektakel',
+          date: '2025',
+          location: 'Zurique, Suíça',
+          description: 'Participação com Portales em reconhecido festival europeu.',
+          type: 'theater',
+        },
+        {
+          id: '3',
+          title: 'PORTALES – Berlin lacht!',
+          date: '2025',
+          location: 'Berlim, Alemanha',
+          description: 'Apresentação de Portales em espaço público.',
+          type: 'festival',
+        },
+        {
+          id: '4',
+          title: 'PORTALES – PRT Bochum',
+          date: '2025',
+          location: 'Bochum, Alemanha',
+          description: 'Apresentação de Portales em programação europeia.',
+          type: 'cultural',
+        },
+        {
+          id: '5',
+          title: 'PORTALES – Festival Internacional de Rua da Bahia',
+          date: '2025',
+          location: 'Salvador da Bahia, Brasil',
+          description: 'Apresentação de Portales em festival de referência no Brasil.',
+          type: 'festival',
+        },
+        {
+          id: '6',
+          title: 'PORTALES – Centro Coreográfico do Rio de Janeiro',
+          date: '2024',
+          location: 'Rio de Janeiro, Brasil',
+          description: 'Apresentação de Portales em espaço dedicado à pesquisa do movimento.',
+          type: 'cultural',
+        },
+        {
+          id: '7',
+          title: 'PORTALES – Convenção Nacional de Circo',
+          date: '2024',
+          location: 'Santiago, Chile',
+          description: 'Apresentação de Portales em encontro profissional do circo chileno.',
+          type: 'convention',
+        },
+        {
+          id: '8',
+          title: 'Pesquisa e criação – PORTALES',
+          date: '2023',
+          location: 'Escola Nacional de Circo Luiz Olimecha, Rio de Janeiro, Brasil',
+          description: 'Apresentação do processo criativo do solo.',
+          type: 'research',
+        },
+        {
+          id: '9',
+          title: 'Residência CADE – Criação Cênica Circense',
+          date: '2025',
+          location: 'Florianópolis, Brasil',
+          description: 'Residência de pesquisa em circo contemporâneo e criação cênica.',
+          type: 'residency',
+        },
+      ],
     },
   },
 };

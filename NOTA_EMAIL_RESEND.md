@@ -46,3 +46,4 @@ Cuando estés listo para producción:
 - **Desarrollo local**: Emails a `solverive@gmail.com` (tu email de Resend)
 - **Producción**: Necesitará dominio verificado para enviar a `nicool.mena@gmail.com`
 
+

@@ -147,3 +147,4 @@ Si tienes problemas:
 - Soporte de Resend: support@resend.com
 - Comunidad: https://resend.com/discord
 
+

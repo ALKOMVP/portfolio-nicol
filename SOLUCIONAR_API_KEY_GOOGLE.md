@@ -120,3 +120,4 @@ GOOGLE_API_KEY=AIzaSyD4zD2JMJVUMDNH_3ivWnwAnGhqOdyB5r0
 - No uses comillas alrededor del valor
 - No compartas tu `.env.local` (está en `.gitignore`)
 
+
