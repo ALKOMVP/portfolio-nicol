@@ -170,6 +170,14 @@ const translations: Record<Language, Translations> = {
       },
       events: [
         {
+          id: '9',
+          title: 'Residencia CADE – Creación Escénica Circense',
+          date: '2025',
+          location: 'Florianópolis, Brasil',
+          description: 'Residencia de investigación en circo contemporáneo y creación escénica.',
+          type: 'residency',
+        },
+        {
           id: '1',
           title: 'PORTALES – Pflasterspektakel',
           date: '2025',
@@ -232,14 +240,6 @@ const translations: Record<Language, Translations> = {
           location: 'Escuela Nacional de Circo Luiz Olimecha, Río de Janeiro, Brasil',
           description: 'Presentación del proceso creativo del solo.',
           type: 'research',
-        },
-        {
-          id: '9',
-          title: 'Residencia CADE – Creación Escénica Circense',
-          date: '2025',
-          location: 'Florianópolis, Brasil',
-          description: 'Residencia de investigación en circo contemporáneo y creación escénica.',
-          type: 'residency',
         },
       ],
     },
@@ -326,6 +326,14 @@ const translations: Record<Language, Translations> = {
       },
       events: [
         {
+          id: '9',
+          title: 'CADE Residency – Scenic Circus Creation',
+          date: '2025',
+          location: 'Florianópolis, Brazil',
+          description: 'Research residency in contemporary circus and scenic creation.',
+          type: 'residency',
+        },
+        {
           id: '1',
           title: 'PORTALES – Pflasterspektakel',
           date: '2025',
@@ -388,14 +396,6 @@ const translations: Record<Language, Translations> = {
           location: 'Escola Nacional de Circo Luiz Olimecha, Rio de Janeiro, Brazil',
           description: 'Presentation of the creative process of the solo.',
           type: 'research',
-        },
-        {
-          id: '9',
-          title: 'CADE Residency – Scenic Circus Creation',
-          date: '2025',
-          location: 'Florianópolis, Brazil',
-          description: 'Research residency in contemporary circus and scenic creation.',
-          type: 'residency',
         },
       ],
     },
@@ -482,6 +482,14 @@ const translations: Record<Language, Translations> = {
       },
       events: [
         {
+          id: '9',
+          title: 'Residência CADE – Criação Cênica Circense',
+          date: '2025',
+          location: 'Florianópolis, Brasil',
+          description: 'Residência de pesquisa em circo contemporâneo e criação cênica.',
+          type: 'residency',
+        },
+        {
           id: '1',
           title: 'PORTALES – Pflasterspektakel',
           date: '2025',
@@ -544,14 +552,6 @@ const translations: Record<Language, Translations> = {
           location: 'Escola Nacional de Circo Luiz Olimecha, Rio de Janeiro, Brasil',
           description: 'Apresentação do processo criativo do solo.',
           type: 'research',
-        },
-        {
-          id: '9',
-          title: 'Residência CADE – Criação Cênica Circense',
-          date: '2025',
-          location: 'Florianópolis, Brasil',
-          description: 'Residência de pesquisa em circo contemporâneo e criação cênica.',
-          type: 'residency',
         },
       ],
     },

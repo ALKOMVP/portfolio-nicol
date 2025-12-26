@@ -16,8 +16,13 @@ interface Event {
 export default function ExperienciaPage() {
   const { t } = useLanguage();
   
-  // Usar los eventos de las traducciones con cast de tipo
-  const events: Event[] = t.experience.events as Event[];
+  // Usar los eventos de las traducciones con cast de tipo y ordenar por fecha (más reciente primero)
+  const events: Event[] = [...(t.experience.events as Event[])].sort((a, b) => {
+    // Comparar por año (más reciente primero)
+    const yearA = parseInt(a.date);
+    const yearB = parseInt(b.date);
+    return yearB - yearA;
+  });
 
   const getTypeColor = (type: EventType) => {
     switch (type) {
