@@ -10,7 +10,7 @@
 ### 2. Crear un formulario
 - Una vez dentro, haz clic en **"New Form"**
 - Nombre: "Contacto Portfolio" (o el que quieras)
-- Email de destino: `alancorcos@hotmail.com`
+- Email de destino: `nicool.mena@gmail.com`
 - Haz clic en **"Create Form"**
 
 ### 3. Copiar la URL
@@ -41,7 +41,7 @@ npm run dev
 ## ✅ ¡Listo!
 
 Ahora cuando alguien envíe el formulario:
-- ✅ El email llegará a `alancorcos@hotmail.com`
+- ✅ El email llegará a `nicool.mena@gmail.com`
 - ✅ No necesitas verificar dominio
 - ✅ No necesitas API keys complicadas
 - ✅ Funciona inmediatamente
@@ -61,5 +61,6 @@ Ahora cuando alguien envíe el formulario:
 4. Guarda
 
 ¡Eso es todo! No necesitas cambiar código.
+
 
 

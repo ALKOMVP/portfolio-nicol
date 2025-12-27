@@ -22,3 +22,4 @@ Si el logo no se muestra:
 3. Recarga la página con Ctrl+Shift+R (o Cmd+Shift+R en Mac) para limpiar el caché
 
 
+

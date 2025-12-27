@@ -30,13 +30,34 @@ export default function ContactoPage() {
     setSubmitStatus('idle');
 
     try {
-      // En producción, Cloudflare Pages usará automáticamente functions/api/contact.ts
-      // En desarrollo, usará app/api/contact/route.ts
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+      // Detectar si estamos en desarrollo local o producción
+      const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      
+      let response: Response;
+      
+      if (isLocalhost) {
+        // En desarrollo local, llamar directamente a Formspree
+        const formspreeUrl = process.env.NEXT_PUBLIC_FORMSPREE_URL || 'https://formspree.io/f/xeeqaweg';
+        response = await fetch(formspreeUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: formData.nombre,
+            email: formData.email,
+            telefono: formData.telefono || '',
+            asunto: formData.asunto,
+            mensaje: formData.mensaje,
+            _subject: `Nuevo contacto: ${formData.asunto}`,
+          }),
+        });
+      } else {
+        // En producción, usar la función de Cloudflare Pages
+        response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+      }
       
       if (!response.ok) throw new Error('Error al enviar');
       
@@ -49,6 +70,7 @@ export default function ContactoPage() {
         mensaje: '',
       });
     } catch (error) {
+      console.error('Error enviando formulario:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);

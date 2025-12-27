@@ -64,3 +64,4 @@ Mientras tanto, puedes usar el dominio de prueba de Resend: `onboarding@resend.d
 - El remitente del email será el email del usuario que completa el formulario (reply_to)
 
 
+
